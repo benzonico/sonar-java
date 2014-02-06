@@ -19,6 +19,8 @@
  */
 package org.sonar.plugins.findbugs;
 
+import org.sonar.api.resources.File;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.Sensor;
@@ -66,8 +68,7 @@ public class FindbugsSensor implements Sensor {
       String longMessage = bugInstance.getMessage();
       String className = bugInstance.getClassName();
       int start = bugInstance.getStartLine();
-
-      JavaFile resource = new JavaFile(getSonarJavaFileKey(className));
+      File resource = new File(getSonarJavaFileKey(className));
       if (context.getResource(resource) != null) {
         Violation violation = Violation.create(rule, resource)
             .setMessage(longMessage);
@@ -80,15 +81,20 @@ public class FindbugsSensor implements Sensor {
   }
 
   private static String getSonarJavaFileKey(String className) {
+    String result = className;
     if (className.indexOf('$') > -1) {
       return className.substring(0, className.indexOf('$'));
     }
-    return className;
+    return result.replace('.', '/');
   }
 
   @Override
   public String toString() {
     return getClass().getSimpleName();
   }
+
+}
+
+class toto{
 
 }

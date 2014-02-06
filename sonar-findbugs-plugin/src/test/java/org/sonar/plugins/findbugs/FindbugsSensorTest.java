@@ -100,7 +100,15 @@ public class FindbugsSensorTest extends FindbugsTests {
     MethodAnnotation methodAnnotation = new MethodAnnotation(className, "_zip", "(Ljava/lang/String;Ljava/io/File;Ljava/util/zip/ZipOutputStream;)V", true);
     methodAnnotation.setSourceLines(new SourceLineAnnotation(className, sourceFile, startLine, 0, 0, 0));
     bugInstance.add(methodAnnotation);
-    Collection<ReportedBug> collection = Arrays.asList(new ReportedBug(bugInstance));
+    BugInstance bugInstance2 = new BugInstance("AM_CREATES_EMPTY_ZIP_FILE_ENTRY", 2);
+    String className2 = "org.sonar.commons.OtherClass";
+    int startLine2 = 207;
+    ClassAnnotation classAnnotation2 = new ClassAnnotation(className2, sourceFile);
+    bugInstance2.add(classAnnotation2);
+    MethodAnnotation methodAnnotation2 = new MethodAnnotation(className2, "_zip", "(Ljava/lang/String;Ljava/io/File;Ljava/util/zip/ZipOutputStream;)V", true);
+    methodAnnotation2.setSourceLines(new SourceLineAnnotation(className2, sourceFile, startLine2, 0, 0, 0));
+    bugInstance2.add(methodAnnotation2);
+    Collection<ReportedBug> collection = Arrays.asList(new ReportedBug(bugInstance), new ReportedBug(bugInstance2));
     when(executor.execute()).thenReturn(collection);
 
     when(context.getResource(any(Resource.class))).thenReturn(new JavaFile("org.sonar.MyClass"));
@@ -109,7 +117,7 @@ public class FindbugsSensorTest extends FindbugsTests {
     analyser.analyse(project, context);
 
     verify(executor).execute();
-    verify(context, times(1)).saveViolation(any(Violation.class));
+    verify(context, times(2)).saveViolation(any(Violation.class));
   }
 
   @Test
