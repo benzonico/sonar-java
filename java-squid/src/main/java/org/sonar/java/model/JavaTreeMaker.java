@@ -131,7 +131,7 @@ public class JavaTreeMaker {
     checkType(astNode, JavaGrammar.TYPE_ARGUMENTS);
     ImmutableList.Builder<Tree> result = ImmutableList.builder();
     for (AstNode child : astNode.getChildren(JavaGrammar.TYPE_ARGUMENT)) {
-      AstNode referenceTypeNode = child.getFirstChild(JavaGrammar.REFERENCE_TYPE);
+      AstNode referenceTypeNode = child.getFirstChild(JavaGrammar.TYPE);
       Tree typeArgument = referenceTypeNode != null ? referenceType(referenceTypeNode) : null;
       if (child.getFirstChild().is(JavaPunctuator.QUERY)) {
         final Tree.Kind kind;
@@ -152,7 +152,7 @@ public class JavaTreeMaker {
   private List<Tree> nonWildcardTypeArguments(AstNode astNode) {
     checkType(astNode, JavaGrammar.NON_WILDCARD_TYPE_ARGUMENTS);
     ImmutableList.Builder<Tree> result = ImmutableList.builder();
-    for (AstNode child : astNode.getChildren(JavaGrammar.REFERENCE_TYPE)) {
+    for (AstNode child : astNode.getChildren(JavaGrammar.TYPE)) {
       result.add(referenceType(child));
     }
     return result.build();
@@ -160,7 +160,7 @@ public class JavaTreeMaker {
 
   @VisibleForTesting
   ExpressionTree referenceType(AstNode astNode) {
-    checkType(astNode, JavaGrammar.REFERENCE_TYPE, JavaGrammar.TYPE);
+    checkType(astNode, JavaGrammar.TYPE);
     ExpressionTree result = astNode.getFirstChild().is(JavaGrammar.BASIC_TYPE) ? basicType(astNode.getFirstChild()) : classType(astNode.getFirstChild());
     return applyDim(result, astNode.getChildren(JavaGrammar.DIM).size());
   }
@@ -1252,7 +1252,7 @@ public class JavaTreeMaker {
       return new JavaTree.InstanceOfTreeImpl(
           astNode,
           expression(astNode.getFirstChild()),
-          referenceType(astNode.getFirstChild(JavaGrammar.REFERENCE_TYPE)));
+          referenceType(astNode.getFirstChild(JavaGrammar.TYPE)));
     }
 
     ExpressionTree expression = expression(astNode.getLastChild());

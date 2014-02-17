@@ -31,8 +31,6 @@ public class TypeArgumentTest {
 
   @Test
   public void ok() {
-    g.rule(JavaGrammar.REFERENCE_TYPE).mock();
-
     assertThat(g.rule(JavaGrammar.TYPE_ARGUMENT))
         .matches("referenceType")
         .matches("?")

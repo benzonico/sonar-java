@@ -261,7 +261,6 @@ public enum JavaGrammar implements GrammarRuleKey {
   CONSTANT_EXPRESSION,
 
   BASIC_TYPE,
-  REFERENCE_TYPE,
   TYPE_ARGUMENTS,
   TYPE_ARGUMENT,
   TYPE_PARAMETER,
@@ -520,15 +519,12 @@ public enum JavaGrammar implements GrammarRuleKey {
    */
   private static void types(LexerlessGrammarBuilder b) {
     b.rule(TYPE).is(b.firstOf(BASIC_TYPE, CLASS_TYPE), b.zeroOrMore(DIM));
-    b.rule(REFERENCE_TYPE).is(b.firstOf(
-        b.sequence(BASIC_TYPE, b.zeroOrMore(DIM)),
-        b.sequence(CLASS_TYPE, b.zeroOrMore(DIM))));
     b.rule(CLASS_TYPE).is(IDENTIFIER, b.optional(TYPE_ARGUMENTS), b.zeroOrMore(DOT, IDENTIFIER, b.optional(TYPE_ARGUMENTS)));
     b.rule(CLASS_TYPE_LIST).is(CLASS_TYPE, b.zeroOrMore(COMMA, CLASS_TYPE));
     b.rule(TYPE_ARGUMENTS).is(LPOINT, TYPE_ARGUMENT, b.zeroOrMore(COMMA, TYPE_ARGUMENT), RPOINT);
     b.rule(TYPE_ARGUMENT).is(b.firstOf(
-        REFERENCE_TYPE,
-        b.sequence(QUERY, b.optional(b.firstOf(EXTENDS, SUPER), REFERENCE_TYPE))));
+        TYPE,
+        b.sequence(QUERY, b.optional(b.firstOf(EXTENDS, SUPER), TYPE))));
     b.rule(TYPE_PARAMETERS).is(LPOINT, TYPE_PARAMETER, b.zeroOrMore(COMMA, TYPE_PARAMETER), RPOINT);
     b.rule(TYPE_PARAMETER).is(IDENTIFIER, b.optional(EXTENDS, BOUND));
     b.rule(BOUND).is(CLASS_TYPE, b.zeroOrMore(AND, CLASS_TYPE));
@@ -811,7 +807,7 @@ public enum JavaGrammar implements GrammarRuleKey {
     b.rule(EQUALITY_EXPRESSION).is(RELATIONAL_EXPRESSION, b.zeroOrMore(b.firstOf(EQUAL, NOTEQUAL), RELATIONAL_EXPRESSION)).skipIfOneChild();
     b.rule(RELATIONAL_EXPRESSION).is(SHIFT_EXPRESSION, b.zeroOrMore(b.firstOf(
         b.sequence(b.firstOf(GE, GT, LE, LT), SHIFT_EXPRESSION),
-        b.sequence(INSTANCEOF, REFERENCE_TYPE)))).skipIfOneChild();
+        b.sequence(INSTANCEOF, TYPE)))).skipIfOneChild();
     b.rule(SHIFT_EXPRESSION).is(ADDITIVE_EXPRESSION, b.zeroOrMore(b.firstOf(SL, BSR, SR), ADDITIVE_EXPRESSION)).skipIfOneChild();
     b.rule(ADDITIVE_EXPRESSION).is(MULTIPLICATIVE_EXPRESSION, b.zeroOrMore(b.firstOf(PLUS, MINUS), MULTIPLICATIVE_EXPRESSION)).skipIfOneChild();
     b.rule(MULTIPLICATIVE_EXPRESSION).is(UNARY_EXPRESSION, b.zeroOrMore(b.firstOf(STAR, DIV, MOD), UNARY_EXPRESSION)).skipIfOneChild();
@@ -839,7 +835,7 @@ public enum JavaGrammar implements GrammarRuleKey {
             b.sequence(SUPER, ARGUMENTS),
             b.sequence(NEW, b.optional(NON_WILDCARD_TYPE_ARGUMENTS), INNER_CREATOR)))));
     b.rule(EXPLICIT_GENERIC_INVOCATION).is(NON_WILDCARD_TYPE_ARGUMENTS, EXPLICIT_GENERIC_INVOCATION_SUFFIX);
-    b.rule(NON_WILDCARD_TYPE_ARGUMENTS).is(LPOINT, REFERENCE_TYPE, b.zeroOrMore(COMMA, REFERENCE_TYPE), RPOINT);
+    b.rule(NON_WILDCARD_TYPE_ARGUMENTS).is(LPOINT, TYPE, b.zeroOrMore(COMMA, TYPE), RPOINT);
     b.rule(EXPLICIT_GENERIC_INVOCATION_SUFFIX).is(b.firstOf(
         b.sequence(SUPER, SUPER_SUFFIX),
         b.sequence(IDENTIFIER, ARGUMENTS)));
