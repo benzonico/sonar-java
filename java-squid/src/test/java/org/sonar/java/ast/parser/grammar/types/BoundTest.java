@@ -35,7 +35,9 @@ public class BoundTest {
 
     assertThat(g.rule(JavaGrammar.BOUND))
         .matches("classType")
-        .matches("classType & classType");
+        .matches("classType & classType")
+        .matches("@Foo classType & @Foo classType")
+    ;
   }
 
 }
