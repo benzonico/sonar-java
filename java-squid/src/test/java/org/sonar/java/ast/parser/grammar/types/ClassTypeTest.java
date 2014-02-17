@@ -37,7 +37,11 @@ public class ClassTypeTest {
         .matches("identifier")
         .matches("identifier typeArguments")
         .matches("identifier typeArguments . identifier typeArguments")
-        .matches("identifier typeArguments . identifier typeArguments . identifier typeArguments");
+        .matches("identifier typeArguments . identifier typeArguments . identifier typeArguments")
+        .matches("@AnnotatedType identifier")
+        .matches("@Annotated identifier typeArguments . @Annotated identifier typeArguments . identifier typeArguments")
+
+    ;
   }
 
 }
