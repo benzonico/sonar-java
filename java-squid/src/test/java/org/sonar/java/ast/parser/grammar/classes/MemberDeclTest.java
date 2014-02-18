@@ -35,6 +35,7 @@ public class MemberDeclTest {
         .matches("Map<SomeType<?>,SomeType<?>> member;")
         .matches("Map < SomeType < ? > , SomeType < ? > > member;")
         .matches("int member()@Foo[]{}")
+        .matches("int member() throws @Foo IllegalStateException {}")
     ;
   }
 
