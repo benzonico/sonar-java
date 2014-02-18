@@ -33,7 +33,9 @@ public class MemberDeclTest {
   public void realLife() {
     assertThat(g.rule(JavaGrammar.MEMBER_DECL))
         .matches("Map<SomeType<?>,SomeType<?>> member;")
-        .matches("Map < SomeType < ? > , SomeType < ? > > member;");
+        .matches("Map < SomeType < ? > , SomeType < ? > > member;")
+        .matches("int member()@Foo[]{}")
+    ;
   }
 
 }
