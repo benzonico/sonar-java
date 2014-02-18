@@ -519,15 +519,15 @@ public enum JavaGrammar implements GrammarRuleKey {
    */
   private static void types(LexerlessGrammarBuilder b) {
     b.rule(TYPE).is(b.firstOf(BASIC_TYPE, CLASS_TYPE), b.zeroOrMore(b.zeroOrMore(ANNOTATION), DIM));
-    b.rule(CLASS_TYPE).is(IDENTIFIER, b.optional(TYPE_ARGUMENTS), b.zeroOrMore(DOT, b.zeroOrMore(ANNOTATION), IDENTIFIER, b.optional(TYPE_ARGUMENTS)));
+    b.rule(CLASS_TYPE).is(b.zeroOrMore(ANNOTATION), IDENTIFIER, b.optional(TYPE_ARGUMENTS), b.zeroOrMore(DOT, b.zeroOrMore(ANNOTATION), IDENTIFIER, b.optional(TYPE_ARGUMENTS)));
     b.rule(CLASS_TYPE_LIST).is(CLASS_TYPE, b.zeroOrMore(COMMA, CLASS_TYPE));
     b.rule(TYPE_ARGUMENTS).is(LPOINT, TYPE_ARGUMENT, b.zeroOrMore(COMMA, TYPE_ARGUMENT), RPOINT);
     b.rule(TYPE_ARGUMENT).is(b.zeroOrMore(ANNOTATION),b.firstOf(
         TYPE,
         b.sequence(QUERY, b.optional(b.firstOf(EXTENDS, SUPER), b.zeroOrMore(ANNOTATION), TYPE))));
     b.rule(TYPE_PARAMETERS).is(LPOINT, TYPE_PARAMETER, b.zeroOrMore(COMMA, TYPE_PARAMETER), RPOINT);
-    b.rule(TYPE_PARAMETER).is(IDENTIFIER, b.optional(EXTENDS, BOUND));
-    b.rule(BOUND).is(b.zeroOrMore(ANNOTATION), CLASS_TYPE, b.zeroOrMore(AND, b.zeroOrMore(ANNOTATION), CLASS_TYPE));
+    b.rule(TYPE_PARAMETER).is(b.zeroOrMore(ANNOTATION), IDENTIFIER, b.optional(EXTENDS, BOUND));
+    b.rule(BOUND).is(CLASS_TYPE, b.zeroOrMore(AND, b.zeroOrMore(ANNOTATION), CLASS_TYPE));
     b.rule(MODIFIER).is(b.firstOf(
         ANNOTATION,
         PUBLIC,
@@ -640,7 +640,7 @@ public enum JavaGrammar implements GrammarRuleKey {
     b.rule(FORMAL_PARAMETERS_DECLS_REST).is(b.firstOf(
         b.sequence(VARIABLE_DECLARATOR_ID, b.optional(COMMA, FORMAL_PARAMETER_DECLS)),
         b.sequence(ELLIPSIS, VARIABLE_DECLARATOR_ID)));
-    b.rule(VARIABLE_DECLARATOR_ID).is(IDENTIFIER, b.zeroOrMore(DIM));
+    b.rule(VARIABLE_DECLARATOR_ID).is(IDENTIFIER, b.zeroOrMore(b.zeroOrMore(ANNOTATION), DIM));
   }
 
   /**
@@ -860,7 +860,7 @@ public enum JavaGrammar implements GrammarRuleKey {
         ARGUMENTS,
         b.sequence(DOT, IDENTIFIER, b.optional(ARGUMENTS)),
         b.sequence(DOT, NON_WILDCARD_TYPE_ARGUMENTS, IDENTIFIER, ARGUMENTS)));
-    b.rule(BASIC_TYPE).is(b.firstOf(
+    b.rule(BASIC_TYPE).is(b.zeroOrMore(ANNOTATION), b.firstOf(
         BYTE,
         SHORT,
         CHAR,
