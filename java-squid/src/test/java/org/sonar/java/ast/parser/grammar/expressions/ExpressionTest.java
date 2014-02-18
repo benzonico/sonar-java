@@ -53,11 +53,17 @@ public class ExpressionTest {
 
         // constructor call
         .matches("<T>this(arguments)")
-        .matches("<T>super(arguments)");
+        .matches("<T>super(arguments)")
+        // Java 7: diamond
+        .matches("new HashMap<>()")
 
-    // Java 7: diamond
-    assertThat(g.rule(JavaGrammar.EXPRESSION))
-        .matches("new HashMap<>()");
+        //Java 8 : constructors with annotation types
+        .matches("new int @Foo [12]")
+        .matches("new int[12] @Foo [13] @Foo @Bar []")
+
+        .matches("new @Foo innerClass(\"literal\")")
+
+    ;
   }
 
 }

@@ -821,7 +821,7 @@ public enum JavaGrammar implements GrammarRuleKey {
         b.sequence(THIS, b.optional(ARGUMENTS)),
         b.sequence(SUPER, SUPER_SUFFIX),
         LITERAL,
-        b.sequence(NEW, CREATOR),
+        b.sequence(NEW, b.zeroOrMore(ANNOTATION), CREATOR),
         b.sequence(QUALIFIED_IDENTIFIER, b.optional(IDENTIFIER_SUFFIX)),
         b.sequence(BASIC_TYPE, b.zeroOrMore(DIM), DOT, CLASS),
         b.sequence(VOID, DOT, CLASS)));
@@ -875,9 +875,9 @@ public enum JavaGrammar implements GrammarRuleKey {
         b.sequence(b.optional(NON_WILDCARD_TYPE_ARGUMENTS), b.firstOf(CLASS_TYPE, BASIC_TYPE), ARRAY_CREATOR_REST)));
     b.rule(CREATED_NAME).is(IDENTIFIER, b.optional(NON_WILDCARD_TYPE_ARGUMENTS), b.zeroOrMore(DOT, IDENTIFIER, b.optional(NON_WILDCARD_TYPE_ARGUMENTS)));
     b.rule(INNER_CREATOR).is(IDENTIFIER, CLASS_CREATOR_REST);
-    b.rule(ARRAY_CREATOR_REST).is(LBRK, b.firstOf(
+    b.rule(ARRAY_CREATOR_REST).is(b.zeroOrMore(ANNOTATION), LBRK, b.firstOf(
         b.sequence(RBRK, b.zeroOrMore(DIM), ARRAY_INITIALIZER),
-        b.sequence(EXPRESSION, RBRK, b.zeroOrMore(DIM_EXPR), b.zeroOrMore(DIM))));
+        b.sequence(EXPRESSION, RBRK, b.zeroOrMore(DIM_EXPR), b.zeroOrMore(b.zeroOrMore(ANNOTATION), DIM))));
     b.rule(CLASS_CREATOR_REST).is(b.optional(DIAMOND), ARGUMENTS, b.optional(CLASS_BODY));
     b.rule(DIAMOND).is(LT, GT);
     b.rule(ARRAY_INITIALIZER).is(LWING, b.optional(VARIABLE_INITIALIZER, b.zeroOrMore(COMMA, VARIABLE_INITIALIZER)), b.optional(COMMA), RWING);
@@ -886,7 +886,7 @@ public enum JavaGrammar implements GrammarRuleKey {
     b.rule(QUALIFIED_IDENTIFIER).is(b.zeroOrMore(ANNOTATION), IDENTIFIER, b.zeroOrMore(DOT, b.zeroOrMore(ANNOTATION), IDENTIFIER));
     b.rule(QUALIFIED_IDENTIFIER_LIST).is(QUALIFIED_IDENTIFIER, b.zeroOrMore(COMMA, QUALIFIED_IDENTIFIER));
     b.rule(DIM).is(LBRK, RBRK);
-    b.rule(DIM_EXPR).is(LBRK, EXPRESSION, RBRK);
+    b.rule(DIM_EXPR).is(b.zeroOrMore(ANNOTATION), LBRK, EXPRESSION, RBRK);
   }
 
   private final String internalName;
