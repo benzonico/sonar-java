@@ -639,7 +639,7 @@ public enum JavaGrammar implements GrammarRuleKey {
     b.rule(FORMAL_PARAMETER_DECLS).is(b.zeroOrMore(b.firstOf(FINAL, ANNOTATION)), TYPE, FORMAL_PARAMETERS_DECLS_REST);
     b.rule(FORMAL_PARAMETERS_DECLS_REST).is(b.firstOf(
         b.sequence(VARIABLE_DECLARATOR_ID, b.optional(COMMA, FORMAL_PARAMETER_DECLS)),
-        b.sequence(ELLIPSIS, VARIABLE_DECLARATOR_ID)));
+        b.sequence(b.zeroOrMore(ANNOTATION), ELLIPSIS, VARIABLE_DECLARATOR_ID)));
     b.rule(VARIABLE_DECLARATOR_ID).is(IDENTIFIER, b.zeroOrMore(b.zeroOrMore(ANNOTATION), DIM));
   }
 
