@@ -44,7 +44,9 @@ public class InterfaceDeclarationTest {
   @Test
   public void realLife() {
     assertThat(g.rule(JavaGrammar.INTERFACE_DECLARATION))
-        .matches("interface HelloWorld { }");
+        .matches("interface HelloWorld { }")
+        .matches("interface HelloWorld { int method() @Foo [];}")
+    ;
   }
 
 }
