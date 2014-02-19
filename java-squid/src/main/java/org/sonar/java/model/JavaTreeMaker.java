@@ -109,7 +109,7 @@ public class JavaTreeMaker {
 
   private ExpressionTree classType(AstNode astNode) {
     checkType(astNode, JavaGrammar.CLASS_TYPE, JavaGrammar.CREATED_NAME);
-    AstNode child = astNode.getFirstChild();
+    AstNode child = astNode.getFirstChild(JavaTokenType.IDENTIFIER);
     ExpressionTree result = identifier(child);
     for (int i = 1; i < astNode.getNumberOfChildren(); i++) {
       child = astNode.getChild(i);
@@ -119,8 +119,8 @@ public class JavaTreeMaker {
         result = new JavaTree.ParameterizedTypeTreeImpl(child, result, typeArguments(child));
       } else if (child.is(JavaGrammar.NON_WILDCARD_TYPE_ARGUMENTS)) {
         result = new JavaTree.ParameterizedTypeTreeImpl(child, result, nonWildcardTypeArguments(child));
-      } else if (!child.is(JavaPunctuator.DOT)) {
-        throw new IllegalStateException("Unexpected AstNodeType: " + astNode.getType().toString());
+      } else if (!(child.is(JavaPunctuator.DOT) || child.is(JavaGrammar.ANNOTATION))) {
+        throw new IllegalStateException("Unexpected AstNodeType: " + astNode.getType().toString()+" at line "+astNode.getTokenLine()+" column "+astNode.getToken().getColumn());
       }
     }
     return result;
@@ -133,7 +133,7 @@ public class JavaTreeMaker {
     for (AstNode child : astNode.getChildren(JavaGrammar.TYPE_ARGUMENT)) {
       AstNode referenceTypeNode = child.getFirstChild(JavaGrammar.TYPE);
       Tree typeArgument = referenceTypeNode != null ? referenceType(referenceTypeNode) : null;
-      if (child.getFirstChild().is(JavaPunctuator.QUERY)) {
+      if (child.hasDirectChildren(JavaPunctuator.QUERY)) {
         final Tree.Kind kind;
         if (child.hasDirectChildren(JavaKeyword.EXTENDS)) {
           kind = Tree.Kind.EXTENDS_WILDCARD;
@@ -456,7 +456,11 @@ public class JavaTreeMaker {
     ImmutableList.Builder<VariableTree> result = ImmutableList.builder();
     for (AstNode variableDeclaratorIdNode : astNode.getDescendants(JavaGrammar.VARIABLE_DECLARATOR_ID)) {
       AstNode typeNode = variableDeclaratorIdNode.getPreviousAstNode();
-      Tree type = typeNode.is(JavaPunctuator.ELLIPSIS) ? new JavaTree.ArrayTypeTreeImpl(typeNode, referenceType(typeNode.getPreviousAstNode())) : referenceType(typeNode);
+      AstNode referenceTypeNode  = typeNode.getPreviousAstNode();
+      if(referenceTypeNode.is(JavaGrammar.ANNOTATION)){
+        referenceTypeNode = referenceTypeNode.getPreviousAstNode();
+      }
+      Tree type = typeNode.is(JavaPunctuator.ELLIPSIS) ? new JavaTree.ArrayTypeTreeImpl(typeNode, referenceType(referenceTypeNode)) : referenceType(typeNode);
       result.add(new JavaTree.VariableTreeImpl(
           variableDeclaratorIdNode,
           JavaTree.ModifiersTreeImpl.EMPTY,

@@ -23,6 +23,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.sonar.sslr.api.AstNode;
+import com.sonar.sslr.impl.ast.AstXmlPrinter;
 import org.sonar.java.ast.api.JavaKeyword;
 import org.sonar.java.ast.api.JavaPunctuator;
 import org.sonar.java.ast.api.JavaTokenType;
@@ -150,8 +151,12 @@ public class SecondPass implements Symbol.Completer {
       if (typeNode.is(JavaPunctuator.ELLIPSIS)) {
         // vararg
         typeNode = typeNode.getPreviousAstNode();
+        if(typeNode.is(JavaGrammar.ANNOTATION)){
+          typeNode = typeNode.getPreviousAstNode();
+        }
       }
-      Preconditions.checkState(typeNode.is(JavaGrammar.TYPE, JavaGrammar.CLASS_TYPE, JavaGrammar.CATCH_TYPE));
+      Preconditions.checkState(typeNode.is(JavaGrammar.TYPE, JavaGrammar.CLASS_TYPE, JavaGrammar.CATCH_TYPE), "Type node error at line "+typeNode.getTokenLine()
+          +" column "+typeNode.getToken().getColumn());
     } else if (identifierNode.getParent().is(JavaGrammar.ENUM_CONSTANT)) {
       // Type of enum constant is enum
       semanticModel.getEnv(symbol).enclosingClass();
