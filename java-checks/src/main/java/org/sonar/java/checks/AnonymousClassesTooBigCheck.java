@@ -26,6 +26,10 @@ import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.check.RuleProperty;
 import org.sonar.java.ast.parser.JavaGrammar;
+import org.sonar.plugins.java.api.JavaFileScanner;
+import org.sonar.plugins.java.api.JavaFileScannerContext;
+import org.sonar.plugins.java.api.tree.BaseTreeVisitor;
+import org.sonar.plugins.java.api.tree.ClassTree;
 import org.sonar.sslr.parser.LexerlessGrammar;
 
 @Rule(
@@ -33,30 +37,46 @@ import org.sonar.sslr.parser.LexerlessGrammar;
   priority = Priority.MAJOR,
   tags={"size"})
 @BelongsToProfile(title = "Sonar way", priority = Priority.MAJOR)
-public class AnonymousClassesTooBigCheck extends SquidCheck<LexerlessGrammar> {
+public class AnonymousClassesTooBigCheck extends BaseTreeVisitor implements JavaFileScanner {
 
   private static final int DEFAULT_MAX = 20;
 
   @RuleProperty(defaultValue = "" + DEFAULT_MAX)
   public int max = DEFAULT_MAX;
 
-  @Override
-  public void init() {
-    subscribeTo(JavaGrammar.CLASS_CREATOR_REST);
-  }
+  private JavaFileScannerContext context;
 
   @Override
-  public void visitNode(AstNode node) {
-    AstNode classBody = node.getFirstChild(JavaGrammar.CLASS_BODY);
-
-    if (classBody != null) {
-      int lines = getNumberOfLines(classBody);
-
-      if (lines > max) {
-        getContext().createLineViolation(this, "Reduce this anonymous class number of lines from " + lines + " to at most " + max + ", or make it a named class.", node);
-      }
-    }
+  public void scanFile(JavaFileScannerContext context) {
+    this.context = context;
+    scan(context.getTree());
   }
+
+  visit
+
+  @Override
+  public void visitClass(ClassTree tree) {
+    System.out.println(tree.simpleName());
+    super.visitClass(tree);
+  }
+
+
+
+  //  public void init() {
+//    subscribeTo(JavaGrammar.CLASS_CREATOR_REST);
+//  }
+
+//  public void visitNode(AstNode node) {
+//    AstNode classBody = node.getFirstChild(JavaGrammar.CLASS_BODY);
+//
+//    if (classBody != null) {
+//      int lines = getNumberOfLines(classBody);
+//
+//      if (lines > max) {
+//        getContext().createLineViolation(this, "Reduce this anonymous class number of lines from " + lines + " to at most " + max + ", or make it a named class.", node);
+//      }
+//    }
+//  }
 
   private static int getNumberOfLines(AstNode node) {
     return node.getLastChild().getTokenLine() - node.getTokenLine() + 1;
