@@ -1234,7 +1234,7 @@ public class JavaTreeMaker {
       return new JavaTree.TypeCastExpressionTreeImpl(
           astNode,
           referenceType(astNode.getFirstChild(JavaGrammar.TYPE)),
-          expression(astNode.getChild(3)));
+          expression(astNode.getFirstChild(JavaPunctuator.RPAR).getNextSibling()));
     } else if (astNode.hasDirectChildren(JavaGrammar.PREFIX_OP)) {
       // 15.15. Unary Operators
       JavaPunctuator punctuator = (JavaPunctuator) astNode.getFirstChild(JavaGrammar.PREFIX_OP).getFirstChild().getType();

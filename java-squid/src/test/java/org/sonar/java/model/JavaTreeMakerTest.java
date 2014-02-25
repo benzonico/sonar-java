@@ -1299,6 +1299,13 @@ public class JavaTreeMakerTest {
     assertThat(tree.is(Tree.Kind.TYPE_CAST)).isTrue();
     assertThat(tree.type()).isNotNull();
     assertThat(tree.expression()).isNotNull();
+
+    astNode = p.parse("class T { boolean m() { return (Foo<T> & Bar) true; } }").getFirstDescendant(JavaGrammar.UNARY_EXPRESSION);
+    tree = (TypeCastTree) maker.expression(astNode);
+    assertThat(tree.is(Tree.Kind.TYPE_CAST)).isTrue();
+    assertThat(tree.type()).isNotNull();
+    assertThat(tree.expression()).isNotNull();
+
   }
 
   /**

@@ -829,7 +829,7 @@ public enum JavaGrammar implements GrammarRuleKey {
     b.rule(UNARY_EXPRESSION).is(b.firstOf(
         METHOD_REFERENCE,
         b.sequence(PREFIX_OP, UNARY_EXPRESSION),
-        b.sequence(LPAR, TYPE, RPAR, UNARY_EXPRESSION),
+        b.sequence(LPAR, TYPE, b.zeroOrMore(AND, CLASS_TYPE), RPAR, UNARY_EXPRESSION),
         b.sequence(PRIMARY, b.zeroOrMore(SELECTOR), b.zeroOrMore(POST_FIX_OP))
     )).skipIfOneChild();
     b.rule(PRIMARY).is(b.firstOf(
