@@ -830,16 +830,16 @@ public enum JavaGrammar implements GrammarRuleKey {
     b.rule(MULTIPLICATIVE_EXPRESSION).is(UNARY_EXPRESSION, b.zeroOrMore(b.firstOf(STAR, DIV, MOD), UNARY_EXPRESSION)).skipIfOneChild();
     b.rule(UNARY_EXPRESSION_NOT_PLUS_MINUS).is(b.firstOf(
         CAST_EXPRESSION,
+        METHOD_REFERENCE,
         b.sequence(PRIMARY, b.zeroOrMore(SELECTOR), b.zeroOrMore(POST_FIX_OP)),
         b.sequence(TILDA, UNARY_EXPRESSION),
         b.sequence(BANG, UNARY_EXPRESSION)
     )).skipIfOneChild();
     b.rule(CAST_EXPRESSION).is(LPAR, b.firstOf(
       b.sequence(BASIC_TYPE, RPAR, UNARY_EXPRESSION),
-      b.sequence(TYPE, b.zeroOrMore(AND, CLASS_TYPE), RPAR, b.firstOf(UNARY_EXPRESSION_NOT_PLUS_MINUS, LAMBDA_EXPRESSION))
+      b.sequence(TYPE, b.zeroOrMore(AND, CLASS_TYPE), RPAR, UNARY_EXPRESSION_NOT_PLUS_MINUS)
     ));
     b.rule(UNARY_EXPRESSION).is(b.firstOf(
-        METHOD_REFERENCE,
         b.sequence(PREFIX_OP, UNARY_EXPRESSION),
         UNARY_EXPRESSION_NOT_PLUS_MINUS
     )).skipIfOneChild();
