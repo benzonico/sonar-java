@@ -19,15 +19,9 @@
  */
 package org.sonar.java.ast.parser.grammar.expressions;
 
-import com.sonar.sslr.impl.Parser;
-import com.sonar.sslr.impl.ast.AstXmlPrinter;
 import org.junit.Test;
-import org.sonar.java.JavaSquid;
 import org.sonar.java.ast.parser.JavaGrammar;
 import org.sonar.sslr.parser.LexerlessGrammar;
-import org.sonar.sslr.parser.ParserAdapter;
-
-import java.nio.charset.Charset;
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
