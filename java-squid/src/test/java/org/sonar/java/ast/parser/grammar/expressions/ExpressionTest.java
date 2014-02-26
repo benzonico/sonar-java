@@ -92,6 +92,7 @@ public class ExpressionTest {
         .matches("(Callable[] & Serializable) foo")
         .matches("(Callable<Integer[]>[] & Serializable) foo")
         .matches("(Comparator<Map.Entry<K, V>>[] & Serializable) foo")
+        .matches("(a & b) - c")
     ;
 
 
