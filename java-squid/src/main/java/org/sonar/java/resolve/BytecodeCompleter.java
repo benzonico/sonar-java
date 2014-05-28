@@ -74,12 +74,22 @@ public class BytecodeCompleter implements Symbol.Completer {
     this.symbols = symbols;
   }
 
+  public Symbol.TypeSymbol registerClass(Symbol.TypeSymbol classSymbol) {
+    String flatName = formFullName(classSymbol);
+    System.out.println("registering "+ flatName);
+    if(classes.containsKey(flatName)) {
+      return classes.get(flatName);
+    }
+    classes.put(flatName, classSymbol);
+    return classSymbol;
+  }
+
   @Override
   public void complete(Symbol symbol) {
     LOG.debug("Completing symbol : " + symbol.name);
     String bytecodeName = formFullName(symbol);
     Symbol.TypeSymbol classSymbol = getClassSymbol(bytecodeName);
-    Preconditions.checkState(classSymbol == symbol);
+    Preconditions.checkState(classSymbol == symbol, "Duplicate symbol for class "+classSymbol.name);
 
     InputStream inputStream = null;
     ClassReader classReader = null;

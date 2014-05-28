@@ -179,6 +179,7 @@ public class FirstPass extends BaseTreeVisitor {
 
     @Override
     public void visitIdentifier(IdentifierTree tree) {
+      System.out.println("--> "+tree.name());
       if (JavaPunctuator.STAR.getValue().equals(tree.name())) {
         //star import : we save the current symbol
         if(isStatic) {
@@ -215,6 +216,7 @@ public class FirstPass extends BaseTreeVisitor {
       flag = computeClassFlags(tree);
     }
     Symbol.TypeSymbol symbol = new Symbol.TypeSymbol(flag, name, env.scope.owner);
+    symbol = resolve.registerClass(symbol);
     if (!anonymousClass) {
       enterSymbol(tree, symbol);
     }

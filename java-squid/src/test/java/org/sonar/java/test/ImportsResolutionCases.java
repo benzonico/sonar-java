@@ -19,7 +19,10 @@
  */
 package org.sonar.java.test;
 
+import org.sonar.java.resolve.BytecodeCompleterPackageVisibility;
+
 public class ImportsResolutionCases {
   public class ImportInnerClass {
+    BytecodeCompleterPackageVisibility bytecodeCompleterPackageVisibility;
   }
 }
