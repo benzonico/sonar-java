@@ -55,4 +55,12 @@ public class UnusedPrivateMethod {
     return 1;
   }
 
+  private int unusedPrivateMethod(int a) {
+    return 1;
+  }
+
+  private void method(){
+    unusedPrivateMethod(2);
+  }
+
 }

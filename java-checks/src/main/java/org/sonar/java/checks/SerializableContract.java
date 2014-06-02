@@ -20,7 +20,6 @@
 package org.sonar.java.checks;
 
 import com.google.common.collect.Sets;
-import org.sonar.java.bytecode.asm.AsmMethod;
 
 import java.util.Set;
 
@@ -41,8 +40,8 @@ public final class SerializableContract {
   private SerializableContract() {
   }
 
-  protected static boolean methodMatch(AsmMethod method) {
-    return SERIALIZABLE_CONTRACT_METHODS.contains(method.getName());
+  protected static boolean methodMatch(String methodName) {
+    return SERIALIZABLE_CONTRACT_METHODS.contains(methodName);
   }
 
 }

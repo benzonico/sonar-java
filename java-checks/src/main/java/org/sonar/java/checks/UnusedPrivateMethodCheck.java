@@ -19,40 +19,55 @@
  */
 package org.sonar.java.checks;
 
+import org.sonar.api.rule.RuleKey;
 import org.sonar.check.BelongsToProfile;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
-import org.sonar.java.bytecode.asm.AsmClass;
-import org.sonar.java.bytecode.asm.AsmMethod;
-import org.sonar.java.bytecode.visitor.BytecodeVisitor;
-import org.sonar.squid.api.CheckMessage;
-import org.sonar.squid.api.SourceFile;
-import org.sonar.squid.api.SourceMethod;
+import org.sonar.java.resolve.SemanticModel;
+import org.sonar.plugins.java.api.JavaFileScanner;
+import org.sonar.plugins.java.api.JavaFileScannerContext;
+import org.sonar.plugins.java.api.tree.BaseTreeVisitor;
+import org.sonar.plugins.java.api.tree.MethodTree;
+import org.sonar.plugins.java.api.tree.Modifier;
 
 @Rule(key = UnusedPrivateMethodCheck.RULE_KEY, priority = Priority.MAJOR,
   tags={"unused"})
 @BelongsToProfile(title = "Sonar way", priority = Priority.MAJOR)
-public class UnusedPrivateMethodCheck extends BytecodeVisitor {
+public class UnusedPrivateMethodCheck extends BaseTreeVisitor implements JavaFileScanner {
 
   public static final String RULE_KEY = "UnusedPrivateMethod";
-  private AsmClass asmClass;
+  private JavaFileScannerContext context;
+  private SemanticModel semanticModel;
+  private RuleKey ruleKey = RuleKey.of(CheckList.REPOSITORY_KEY, RULE_KEY);
 
   @Override
-  public void visitClass(AsmClass asmClass) {
-    this.asmClass = asmClass;
+  public void scanFile(JavaFileScannerContext context) {
+    this.context = context;
+    semanticModel = (SemanticModel) context.getSemanticModel();
+    scan(context.getTree());
   }
 
   @Override
-  public void visitMethod(AsmMethod asmMethod) {
-    if (!asmMethod.isUsed() && asmMethod.isPrivate() && !asmMethod.isDefaultConstructor() && !SerializableContract.methodMatch(asmMethod)) {
-      CheckMessage message = new CheckMessage(this, "Private method '" + asmMethod.getName() + "(...)' is never used.");
-      SourceMethod sourceMethod = getSourceMethod(asmMethod);
-      if (sourceMethod != null) {
-        message.setLine(sourceMethod.getStartAtLine());
+  public void visitMethod(MethodTree tree) {
+    if(isPrivate(tree) && !SerializableContract.methodMatch(tree.simpleName().name()) && !isDefaultConstructor(tree)) {
+      if(semanticModel.getUsages(semanticModel.getSymbol(tree)).isEmpty()) {
+        context.addIssue(tree, ruleKey, "Private method '"+tree.simpleName().name()+"(...)' is never used.");
       }
-      SourceFile file = getSourceFile(asmClass);
-      file.log(message);
     }
+    super.visitMethod(tree);
+  }
+
+  private boolean isDefaultConstructor(MethodTree tree) {
+    return tree.parameters().isEmpty() && tree.returnType() == null;
+  }
+
+  private boolean isPrivate(MethodTree tree) {
+    for(Modifier modifier : tree.modifiers().modifiers()) {
+      if(Modifier.PRIVATE.equals(modifier)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override

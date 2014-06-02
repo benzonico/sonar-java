@@ -142,6 +142,7 @@ public class SecondPass implements Symbol.Completer {
     if (type != null) {
       symbol.type = ((Type.ClassType) type).symbol;
     }
+    new Type.MethodType(arg, symbol.type, thrown, )
   }
 
   public void complete(Symbol.VariableSymbol symbol) {

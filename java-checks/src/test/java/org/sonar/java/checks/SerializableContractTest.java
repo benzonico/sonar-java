@@ -20,25 +20,20 @@
 package org.sonar.java.checks;
 
 import org.junit.Test;
-import org.sonar.java.bytecode.asm.AsmMethod;
 
 import java.lang.reflect.Constructor;
 
 import static org.fest.assertions.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class SerializableContractTest {
 
   @Test
   public void testMethodMatch() {
-    AsmMethod method = mock(AsmMethod.class);
-    when(method.getName()).thenReturn("writeObject", "readObject", "writeReplace", "readResolve", "getParameter");
-    assertThat(SerializableContract.methodMatch(method)).isTrue();
-    assertThat(SerializableContract.methodMatch(method)).isTrue();
-    assertThat(SerializableContract.methodMatch(method)).isTrue();
-    assertThat(SerializableContract.methodMatch(method)).isTrue();
-    assertThat(SerializableContract.methodMatch(method)).isFalse();
+    assertThat(SerializableContract.methodMatch("writeObject")).isTrue();
+    assertThat(SerializableContract.methodMatch("readObject")).isTrue();
+    assertThat(SerializableContract.methodMatch("writeReplace")).isTrue();
+    assertThat(SerializableContract.methodMatch("readResolve")).isTrue();
+    assertThat(SerializableContract.methodMatch("getParameter")).isFalse();
   }
 
   @Test

@@ -34,6 +34,7 @@ import org.sonar.plugins.java.api.tree.BinaryExpressionTree;
 import org.sonar.plugins.java.api.tree.ConditionalExpressionTree;
 import org.sonar.plugins.java.api.tree.EnumConstantTree;
 import org.sonar.plugins.java.api.tree.ExpressionStatementTree;
+import org.sonar.plugins.java.api.tree.ExpressionTree;
 import org.sonar.plugins.java.api.tree.IdentifierTree;
 import org.sonar.plugins.java.api.tree.InstanceOfTree;
 import org.sonar.plugins.java.api.tree.LambdaExpressionTree;
@@ -107,7 +108,11 @@ public class ExpressionVisitor extends BaseTreeVisitor {
     if (type == null) {
       type = symbols.unknownType;
     }
-    Symbol symbol = resolve.findMethod(env, type.symbol, name, ImmutableList.<Type>of());
+    ImmutableList.Builder<Type> args = new ImmutableList.Builder<Type>();
+    for(ExpressionTree arg : tree.arguments()) {
+      args.add(types.get(arg));
+    }
+    Symbol symbol = resolve.findMethod(env, type.symbol, name, args.build());
     associateReference(identifier, symbol);
     type = getTypeOfSymbol(symbol);
     if (type == null) {

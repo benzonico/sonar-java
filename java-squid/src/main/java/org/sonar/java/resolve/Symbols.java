@@ -64,6 +64,7 @@ public class Symbols {
   final Type serializableType;
   final Type classType;
   final Type stringType;
+  final Type voidType;
 
   public Symbols(BytecodeCompleter bytecodeCompleter) {
     rootPackage = new Symbol.PackageSymbol("", null);
@@ -98,6 +99,7 @@ public class Symbols {
     floatType = initType(Type.FLOAT, "float");
     doubleType = initType(Type.DOUBLE, "double");
     booleanType = initType(Type.BOOLEAN, "boolean");
+    voidType = initType(Type.VOID, "void");
     nullType = initType(Type.BOT, "<nulltype>");
 
     bytecodeCompleter.init(this);

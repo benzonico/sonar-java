@@ -21,7 +21,11 @@ package org.sonar.java.checks;
 
 import com.sonar.sslr.squid.checks.CheckMessagesVerifier;
 import org.junit.Test;
+import org.sonar.java.JavaAstScanner;
+import org.sonar.java.model.VisitorsBridge;
 import org.sonar.squid.api.SourceFile;
+
+import java.io.File;
 
 import static org.fest.assertions.Assertions.assertThat;
 
@@ -31,9 +35,9 @@ public class UnusedPrivateMethodCheckTest {
 
   @Test
   public void test() {
-    SourceFile file = BytecodeFixture.scan("UnusedPrivateMethod", check);
+    SourceFile file = JavaAstScanner.scanSingleFile(new File("src/test/java/org/sonar/java/checks/targets/UnusedPrivateMethod.java"), new VisitorsBridge(check));
     CheckMessagesVerifier.verify(file.getCheckMessages())
-      .next().withMessage("Private method 'unusedPrivateMethod(...)' is never used.") // TODO verify line?
+      .next().atLine(54).withMessage("Private method 'unusedPrivateMethod(...)' is never used.")
       .noMore();
   }
 
