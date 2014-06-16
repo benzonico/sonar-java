@@ -6,4 +6,15 @@ class Foo {
   }
 
   public int a;
+
+  public
+    final// Non-Compliant
+      static void  main(String[] args) {}
+@Nullable @Deprecated final static method(){}
+@Nullable
+  public
+    static
+        @Deprecated
+          final
+          method(){}
 }

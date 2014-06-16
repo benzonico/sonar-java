@@ -36,7 +36,11 @@ public class ModifiersOrderCheckTest {
   public void detected() {
     SourceFile file = JavaAstScanner.scanSingleFile(new File("src/test/files/checks/ModifiersOrderCheck.java"), new ModifiersOrderCheck());
     checkMessagesVerifier.verify(file.getCheckMessages())
-        .next().atLine(5).withMessage("Reorder the modifiers to comply with the Java Language Specification.");
+        .next().atLine(5).withMessage("Reorder the modifiers to comply with the Java Language Specification.")
+        .next().atLine(11)
+        .next().atLine(13)
+        .next().atLine(17)
+    ;
   }
 
 }
