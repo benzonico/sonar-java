@@ -1,3 +1,6 @@
+import java.lang.Object;
+import java.lang.Override;
+
 class A {
   String str1 = "blue";
   String str2 = "blue";
@@ -40,5 +43,11 @@ class C{
     if(strArray1 != strArray2) {}
     if(null != str1){ }
     if(str1 != null){ }
+  }
+
+  public boolean equals(Object obj) {
+    if (str1 != str2) {}
+    if (str1 == str2) {}
+    return super.equals(obj);
   }
 }
