@@ -19,47 +19,46 @@
  */
 package org.sonar.java.checks;
 
-import com.sonar.sslr.api.AstNode;
-import org.sonar.squidbridge.checks.SquidCheck;
+import org.sonar.api.rule.RuleKey;
 import org.sonar.check.BelongsToProfile;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
-import org.sonar.java.ast.parser.JavaGrammar;
-import org.sonar.sslr.parser.LexerlessGrammar;
+import org.sonar.java.model.expression.MethodInvocationTreeImpl;
+import org.sonar.plugins.java.api.JavaFileScanner;
+import org.sonar.plugins.java.api.JavaFileScannerContext;
+import org.sonar.plugins.java.api.tree.BaseTreeVisitor;
+import org.sonar.plugins.java.api.tree.IdentifierTree;
+import org.sonar.plugins.java.api.tree.MemberSelectExpressionTree;
+import org.sonar.plugins.java.api.tree.MethodInvocationTree;
+import org.sonar.plugins.java.api.tree.Tree;
 
 @Rule(
-  key = "S1148",
-  priority = Priority.CRITICAL,
-  tags={"error-handling"})
+    key = PrintStackTraceCalledWithoutArgumentCheck.RULE_KEY,
+    priority = Priority.CRITICAL,
+    tags = {"error-handling"})
 @BelongsToProfile(title = "Sonar way", priority = Priority.CRITICAL)
-public class PrintStackTraceCalledWithoutArgumentCheck extends SquidCheck<LexerlessGrammar> {
+public class PrintStackTraceCalledWithoutArgumentCheck extends BaseTreeVisitor implements JavaFileScanner {
+
+  public static final String RULE_KEY = "S1148";
+  private final RuleKey ruleKey = RuleKey.of(CheckList.REPOSITORY_KEY, RULE_KEY);
+  private JavaFileScannerContext context;
 
   @Override
-  public void init() {
-    subscribeTo(JavaGrammar.PRIMARY);
+  public void scanFile(JavaFileScannerContext context) {
+    this.context = context;
+    scan(context.getTree());
   }
 
   @Override
-  public void visitNode(AstNode node) {
-    if (isPrintStackTraceCall(node)) {
-      getContext().createLineViolation(this, "Use a logger to log this exception.", node);
+  public void visitMethodInvocation(MethodInvocationTree tree) {
+    super.visitMethodInvocation(tree);
+    if (tree.methodSelect().is(Tree.Kind.MEMBER_SELECT)) {
+      IdentifierTree identifierTree = ((MemberSelectExpressionTree) tree.methodSelect()).identifier();
+      if (identifierTree.name().equals("printStackTrace")) {
+        System.out.println(((MethodInvocationTreeImpl) tree).getType());
+        context.addIssue(identifierTree, ruleKey, "Use a logger to log this exception.");
+      }
     }
-  }
-
-  private static boolean isPrintStackTraceCall(AstNode node) {
-    AstNode identifierSuffix = node.getFirstChild(JavaGrammar.IDENTIFIER_SUFFIX);
-
-    return identifierSuffix != null &&
-      hasArgumentIdentifierSuffix(identifierSuffix) &&
-      isPrintStackTraceQualifiedIdentifier(node.getFirstChild(JavaGrammar.QUALIFIED_IDENTIFIER));
-  }
-
-  private static boolean hasArgumentIdentifierSuffix(AstNode node) {
-    return node.hasDirectChildren(JavaGrammar.ARGUMENTS);
-  }
-
-  private static boolean isPrintStackTraceQualifiedIdentifier(AstNode node) {
-    return "printStackTrace".equals(node.getLastChild().getTokenOriginalValue());
   }
 
 }
