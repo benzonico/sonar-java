@@ -19,6 +19,7 @@
  */
 package org.sonar.plugins.java;
 
+import com.google.common.collect.Lists;
 import org.sonar.api.CoreProperties;
 import org.sonar.api.batch.DependedUpon;
 import org.sonar.api.batch.DependsUpon;
@@ -26,16 +27,13 @@ import org.sonar.api.batch.Phase;
 import org.sonar.api.batch.ProjectClasspath;
 import org.sonar.api.batch.Sensor;
 import org.sonar.api.batch.SensorContext;
+import org.sonar.api.batch.fs.FileSystem;
+import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.checks.AnnotationCheckFactory;
 import org.sonar.api.checks.NoSonarFilter;
 import org.sonar.api.config.Settings;
 import org.sonar.api.profiles.RulesProfile;
-import org.sonar.api.resources.InputFile;
-import org.sonar.api.resources.Java;
 import org.sonar.api.resources.Project;
-import org.sonar.api.scan.filesystem.FileQuery;
-import org.sonar.api.scan.filesystem.FileType;
-import org.sonar.api.scan.filesystem.ModuleFileSystem;
 import org.sonar.java.JavaConfiguration;
 import org.sonar.java.JavaSquid;
 import org.sonar.java.SonarComponents;
@@ -44,7 +42,6 @@ import org.sonar.java.checks.CheckList;
 import org.sonar.squidbridge.api.CodeVisitor;
 
 import java.io.File;
-import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -58,44 +55,44 @@ public class JavaSquidSensor implements Sensor {
   private final NoSonarFilter noSonarFilter;
   private final ProjectClasspath projectClasspath;
   private final SonarComponents sonarComponents;
-  private final ModuleFileSystem moduleFileSystem;
   private final DefaultJavaResourceLocator javaResourceLocator;
   private final RulesProfile profile;
+  private final FileSystem fs;
   private Settings settings;
 
-  public JavaSquidSensor(RulesProfile profile, NoSonarFilter noSonarFilter, ProjectClasspath projectClasspath, SonarComponents sonarComponents, ModuleFileSystem moduleFileSystem,
+  public JavaSquidSensor(RulesProfile profile, NoSonarFilter noSonarFilter, ProjectClasspath projectClasspath, SonarComponents sonarComponents, FileSystem fs,
                          DefaultJavaResourceLocator javaResourceLocator, Settings settings) {
     this.profile = profile;
     this.annotationCheckFactory = AnnotationCheckFactory.create(profile, CheckList.REPOSITORY_KEY, CheckList.getChecks());
     this.noSonarFilter = noSonarFilter;
     this.projectClasspath = projectClasspath;
     this.sonarComponents = sonarComponents;
-    this.moduleFileSystem = moduleFileSystem;
+    this.fs = fs;
     this.javaResourceLocator = javaResourceLocator;
     this.settings = settings;
   }
 
   public boolean shouldExecuteOnProject(Project project) {
-    return !moduleFileSystem.files(FileQuery.on(FileType.values()).onLanguage(Java.KEY)).isEmpty();
+    return fs.hasFiles(fs.predicates().hasLanguage(Java.KEY));
   }
 
   public void analyse(Project project, SensorContext context) {
     Collection<CodeVisitor> checks = annotationCheckFactory.getChecks();
 
     JavaSquid squid = new JavaSquid(createConfiguration(project), sonarComponents, checks.toArray(new CodeVisitor[checks.size()]));
-    squid.scan(getSourceFiles(project), getTestFiles(project), getBytecodeFiles(project));
+    squid.scan(getSourceFiles(), getTestFiles(project), getBytecodeFiles(project));
 
     javaResourceLocator.setSquidIndex(squid.getIndex());
 
     new Bridges(squid, settings).save(context, project, annotationCheckFactory, noSonarFilter, profile);
   }
 
-  private List<InputFile> getSourceFiles(Project project) {
-    return project.getFileSystem().mainFiles(Java.KEY);
+  private Collection<InputFile> getSourceFiles() {
+    return Lists.newArrayList(fs.inputFiles(fs.predicates().hasType(InputFile.Type.MAIN)));
   }
 
-  private List<InputFile> getTestFiles(Project project) {
-    return project.getFileSystem().testFiles(Java.KEY);
+  private Collection<InputFile> getTestFiles(Project project) {
+    return Lists.newArrayList(fs.inputFiles(fs.predicates().hasType(InputFile.Type.TEST)));
   }
 
   private List<File> getBytecodeFiles(Project project) {
@@ -107,8 +104,7 @@ public class JavaSquidSensor implements Sensor {
 
   private JavaConfiguration createConfiguration(Project project) {
     boolean analyzePropertyAccessors = settings.getBoolean(JavaPlugin.SQUID_ANALYSE_ACCESSORS_PROPERTY);
-    Charset charset = moduleFileSystem.sourceCharset();
-    JavaConfiguration conf = new JavaConfiguration(charset);
+    JavaConfiguration conf = new JavaConfiguration(fs.encoding());
     conf.setAnalyzePropertyAccessors(analyzePropertyAccessors);
     return conf;
   }

@@ -30,7 +30,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mockito;
-import org.sonar.api.resources.InputFile;
+import org.sonar.api.batch.fs.InputFile;
 import org.sonar.squidbridge.SquidAstVisitor;
 import org.sonar.squidbridge.api.AnalysisException;
 import org.sonar.sslr.grammar.GrammarRuleKey;
@@ -149,7 +149,7 @@ public class AstScannerTest {
 
   private static InputFile mockInputFile(File file) {
     InputFile inputFile = mock(InputFile.class);
-    when(inputFile.getFile()).thenReturn(file);
+    when(inputFile.file()).thenReturn(file);
     return inputFile;
   }
 

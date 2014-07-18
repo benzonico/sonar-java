@@ -22,12 +22,10 @@ package org.sonar.java;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sonar.api.resources.InputFile;
-import org.sonar.api.resources.InputFileUtils;
+import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.utils.TimeProfiler;
 import org.sonar.graph.DirectedGraph;
 import org.sonar.graph.DirectedGraphAccessor;
@@ -53,7 +51,6 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -113,15 +110,6 @@ public class JavaSquid implements DirectedGraphAccessor<SourceCode, SourceCodeEd
     astScannerForTests.accept(new FileVisitor());
     astScannerForTests.accept(new TestVisitor());
     astScannerForTests.accept(new ClassVisitor());
-  }
-
-  @VisibleForTesting
-  public void scanDirectories(Collection<File> sourceDirectories, Collection<File> bytecodeFilesOrDirectories) {
-    List<InputFile> sourceFiles = Lists.newArrayList();
-    for (File dir : sourceDirectories) {
-      sourceFiles.addAll(InputFileUtils.create(dir, FileUtils.listFiles(dir, new String[]{"java"}, true)));
-    }
-    scan(sourceFiles, Collections.<InputFile>emptyList(), bytecodeFilesOrDirectories);
   }
 
   public void scan(Collection<InputFile> sourceFiles, Collection<InputFile> testFiles, Collection<File> bytecodeFilesOrDirectories) {

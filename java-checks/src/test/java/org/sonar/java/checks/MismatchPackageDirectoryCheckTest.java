@@ -19,6 +19,7 @@
  */
 package org.sonar.java.checks;
 
+import org.hamcrest.text.StringStartsWith;
 import org.junit.Rule;
 import org.junit.Test;
 import org.sonar.java.JavaAstScanner;
@@ -47,8 +48,8 @@ public class MismatchPackageDirectoryCheckTest {
   public void mismatch() {
     SourceFile file = JavaAstScanner.scanSingleFile(new File("src/test/files/checks/mismatchPackage/Mismatch.java"), new VisitorsBridge(new MismatchPackageDirectoryCheck()));
     String expectedLocation = "org"+File.separator+"foo"+File.separator+"mismatchPackage";
-    String actualLocation = "src"+File.separator+"test"+File.separator+"files"+File.separator+"checks"+File.separator+"mismatchPackage";
-    checkMessagesVerifier.verify(file.getCheckMessages()).next().atLine(1).withMessage("This file \"Mismatch.java\" should be located in \""+expectedLocation+"\" directory, not in \""+actualLocation+"\".");
+    //Actual location is full path name
+    checkMessagesVerifier.verify(file.getCheckMessages()).next().atLine(1).withMessageThat(new StringStartsWith("This file \"Mismatch.java\" should be located in \"" + expectedLocation + "\" directory"));
   }
 
 }

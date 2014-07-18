@@ -19,15 +19,15 @@
  */
 package org.sonar.java.checks;
 
-import org.sonar.squidbridge.checks.CheckMessagesVerifier;
 import org.junit.Test;
-import org.sonar.api.resources.InputFile;
-import org.sonar.api.resources.InputFileUtils;
+import org.sonar.api.batch.fs.InputFile;
+import org.sonar.api.batch.fs.internal.DefaultInputFile;
 import org.sonar.java.JavaConfiguration;
 import org.sonar.java.JavaSquid;
 import org.sonar.squidbridge.api.CodeVisitor;
 import org.sonar.squidbridge.api.SourceCode;
 import org.sonar.squidbridge.api.SourceFile;
+import org.sonar.squidbridge.checks.CheckMessagesVerifier;
 import org.sonar.squidbridge.indexer.QueryByType;
 
 import java.io.File;
@@ -59,10 +59,11 @@ public class UnusedPrivateMethodCheckTest {
 
   public static SourceFile scan(CodeVisitor visitor) {
     File baseDir = new File("src/test/resources/");
-    InputFile sourceFile = InputFileUtils.create(baseDir, new File(baseDir, "Lambdas.java"));
+    File javaFile = new File(baseDir, "Lambdas.java");
+    InputFile sourceFile = new DefaultInputFile(javaFile.getPath()).setLanguage("java").setFile(javaFile);
     File bytecodeFile = new File("target/test-classes/");
 
-    if (!sourceFile.getFile().isFile()) {
+    if (!sourceFile.file().isFile()) {
       throw new IllegalArgumentException("File '" + sourceFile + "' not found.");
     }
 

@@ -36,7 +36,6 @@ public class UselessImportCheckTest {
   public void detected_with_package() {
     SourceFile file = JavaAstScanner.scanSingleFile(
       new File("src/test/files/checks/UselessImportCheck/WithPackage.java"),
-      new File("src/test/files/"),
       new UselessImportCheck());
     checkMessagesVerifier.verify(file.getCheckMessages())
       .next().atLine(8).withMessage("Remove this unused import 'a.b.c.NonCompliant'.")
@@ -52,7 +51,6 @@ public class UselessImportCheckTest {
   public void detected_without_package() {
     SourceFile file = JavaAstScanner.scanSingleFile(
       new File("src/test/files/checks/UselessImportCheck/WithoutPackage.java"),
-      new File("src/test/files/"),
       new UselessImportCheck());
     checkMessagesVerifier.verify(file.getCheckMessages())
       .next().atLine(2);

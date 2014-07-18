@@ -28,7 +28,7 @@ import com.sonar.sslr.impl.Parser;
 import com.sonar.sslr.impl.ast.AstWalker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sonar.api.resources.InputFile;
+import org.sonar.api.batch.fs.InputFile;
 import org.sonar.java.ProgressReport;
 import org.sonar.java.ast.api.JavaMetric;
 import org.sonar.java.ast.visitors.VisitorContext;
@@ -106,7 +106,7 @@ public class AstScanner {
     progressReport.start(files.size() + " source files to be analyzed");
     int count = 0;
     for (InputFile inputFile : files) {
-      File file = inputFile.getFile();
+      File file = inputFile.file();
 
       progressReport.message(count + "/" + files.size() + " files analyzed, current is " + file.getAbsolutePath());
       count++;

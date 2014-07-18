@@ -19,8 +19,8 @@
  */
 package org.sonar.java.checks;
 
-import org.sonar.api.resources.InputFile;
-import org.sonar.api.resources.InputFileUtils;
+import org.sonar.api.batch.fs.InputFile;
+import org.sonar.api.batch.fs.internal.DefaultInputFile;
 import org.sonar.java.JavaConfiguration;
 import org.sonar.java.JavaSquid;
 import org.sonar.squidbridge.api.CodeVisitor;
@@ -40,10 +40,11 @@ public class BytecodeFixture {
 
   public static SourceFile scan(String target, CodeVisitor visitor) {
     File baseDir = new File("src/test/java/");
-    InputFile sourceFile = InputFileUtils.create(baseDir, new File(baseDir, "org/sonar/java/checks/targets/" + target + ".java"));
+    File javaFile = new File(baseDir, "org/sonar/java/checks/targets/" + target + ".java");
+    InputFile sourceFile = new DefaultInputFile(javaFile.getPath()).setFile(javaFile).setLanguage("java");
     File bytecodeFile = new File("target/test-classes/");
 
-    if (!sourceFile.getFile().isFile()) {
+    if (!sourceFile.file().isFile()) {
       throw new IllegalArgumentException("File '" + sourceFile + "' not found.");
     }
 

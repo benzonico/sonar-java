@@ -23,18 +23,16 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.sonar.api.batch.fs.InputFile;
+import org.sonar.api.batch.fs.internal.DefaultInputFile;
 import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.measures.FileLinesContext;
-import org.sonar.api.measures.FileLinesContextFactory;
-import org.sonar.api.resources.InputFile;
-import org.sonar.api.resources.InputFileUtils;
 import org.sonar.java.JavaAstScanner;
 import org.sonar.java.JavaConfiguration;
 import org.sonar.java.SonarComponents;
 import org.sonar.java.ast.AstScanner;
 
 import java.io.File;
-import java.util.List;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -49,9 +47,8 @@ public class FileLinesVisitorTest {
     when(sonarComponents.fileLinesContextFor(Mockito.any(File.class))).thenReturn(context);
 
     AstScanner scanner = JavaAstScanner.create(new JavaConfiguration(Charsets.UTF_8), new FileLinesVisitor(sonarComponents, Charsets.UTF_8));
-    File baseDir = new File("src/test/files/metrics");
-    List<InputFile> inputFiles = InputFileUtils.create(baseDir, ImmutableList.of(new File("src/test/files/metrics/LinesOfCode.java")));
-    scanner.scan(inputFiles);
+    ImmutableList<InputFile> javaFile = ImmutableList.<InputFile>of(new DefaultInputFile("src/test/files/metrics/LinesOfCode.java").setFile(new File("src/test/files/metrics/LinesOfCode.java")));
+    scanner.scan(javaFile);
 
     verify(context).setIntValue(CoreMetrics.NCLOC_DATA_KEY, 1, 0);
     verify(context).setIntValue(CoreMetrics.NCLOC_DATA_KEY, 2, 0);
@@ -70,9 +67,8 @@ public class FileLinesVisitorTest {
     when(sonarComponents.fileLinesContextFor(Mockito.any(File.class))).thenReturn(context);
 
     AstScanner scanner = JavaAstScanner.create(new JavaConfiguration(Charsets.UTF_8), new FileLinesVisitor(sonarComponents, Charsets.UTF_8));
-    File baseDir = new File("src/test/files/metrics");
-    List<InputFile> inputFiles = InputFileUtils.create(baseDir, ImmutableList.of(new File("src/test/files/metrics/Comments.java")));
-    scanner.scan(inputFiles);
+    ImmutableList<InputFile> javaFile = ImmutableList.<InputFile>of(new DefaultInputFile("src/test/files/metrics/Comments.java").setFile(new File("src/test/files/metrics/Comments.java")));
+    scanner.scan(javaFile);
 
     verify(context).setIntValue(CoreMetrics.COMMENT_LINES_DATA_KEY, 1, 1);
     verify(context).setIntValue(CoreMetrics.COMMENT_LINES_DATA_KEY, 2, 1);

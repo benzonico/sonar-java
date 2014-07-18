@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.sonar.graph.DirectedGraph;
 import org.sonar.java.JavaConfiguration;
 import org.sonar.java.JavaSquid;
+import org.sonar.java.SquidTestUtils;
 import org.sonar.squidbridge.api.SourceCode;
 import org.sonar.squidbridge.api.SourceCodeEdge;
 import org.sonar.squidbridge.api.SourceCodeEdgeUsage;
@@ -57,7 +58,8 @@ public class BytecodeVisitorsTest {
   public static void setup() {
     JavaConfiguration conf = new JavaConfiguration(Charset.forName("UTF-8"));
     JavaSquid squid = new JavaSquid(conf);
-    squid.scanDirectories(
+    SquidTestUtils.scanDirectories(
+        squid,
         Collections.singleton(new File("src/test/files/bytecode/src")),
         Collections.singleton(new File("src/test/files/bytecode/bin")));
     index = squid.getIndex();
