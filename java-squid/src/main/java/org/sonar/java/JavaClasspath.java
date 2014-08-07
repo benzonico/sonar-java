@@ -19,9 +19,11 @@
  */
 package org.sonar.java;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.sonar.api.BatchExtension;
 import org.sonar.api.batch.ProjectClasspath;
+import org.sonar.api.config.PropertyDefinition;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -40,5 +42,20 @@ public class JavaClasspath implements BatchExtension {
 
   public List<File> getElements() {
     return elements;
+  }
+
+  public static List<PropertyDefinition> getProperties() {
+    ImmutableList.Builder<PropertyDefinition> extensions = ImmutableList.builder();
+    extensions.add(PropertyDefinition.builder("sonar.java.binaries")
+        .defaultValue("")
+        .hidden()
+        .build()
+    );
+    extensions.add(PropertyDefinition.builder("sonar.java.libraries")
+        .defaultValue("")
+        .hidden()
+        .build()
+    );
+    return extensions.build();
   }
 }
