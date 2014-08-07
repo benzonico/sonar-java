@@ -47,6 +47,7 @@ public class JavaPlugin extends SonarPlugin {
     builder.addAll(JaCoCoExtensions.getExtensions());
     builder.addAll(JavaClasspath.getProperties());
     builder.add(
+        JavaClasspath.class,
         JavaCommonRulesEngine.class,
         JavaCommonRulesDecorator.class,
         Java.class,
