@@ -36,14 +36,15 @@ import org.sonar.plugins.java.api.tree.VariableTree;
 
 public class PublicApiChecker {
 
-  private static final Tree.Kind[] CLASS_KINDS = {
+  public static final Tree.Kind[] CLASS_KINDS = {
       Tree.Kind.CLASS, Tree.Kind.INTERFACE, Tree.Kind.ENUM, Tree.Kind.ANNOTATION_TYPE
   };
 
-  private static final Tree.Kind[] METHOD_KINDS = {
+  public static final Tree.Kind[] METHOD_KINDS = {
       Tree.Kind.METHOD, Tree.Kind.CONSTRUCTOR
   };
-  private static final Tree.Kind[] API_KINDS = {
+
+  public static final Tree.Kind[] API_KINDS = {
       Tree.Kind.CLASS, Tree.Kind.INTERFACE, Tree.Kind.ENUM, Tree.Kind.ANNOTATION_TYPE,
       Tree.Kind.METHOD, Tree.Kind.CONSTRUCTOR,
       Tree.Kind.VARIABLE
@@ -108,7 +109,7 @@ public class PublicApiChecker {
   }
 
 
-  public static String getApiJavadoc(Tree tree) {
+  public String getApiJavadoc(Tree tree) {
     if (tree.is(API_KINDS)) {
       ModifiersTree modifiersTree = null;
       if (tree.is(CLASS_KINDS)) {
@@ -119,16 +120,22 @@ public class PublicApiChecker {
         modifiersTree = ((VariableTree) tree).modifiers();
       }
 
-      Tree tokenTree = tree;
+      Tree tokenTree = null;
       if (modifiersTree != null && !modifiersTree.modifiers().isEmpty()) {
         tokenTree = modifiersTree;
       }
-        SyntaxToken syntaxToken = new InternalSyntaxToken(((JavaTree)tokenTree).getToken());
-        for (SyntaxTrivia syntaxTrivia : syntaxToken.trivias()) {
-          if (syntaxTrivia.comment().startsWith("/**")) {
-            return syntaxTrivia.comment();
-          }
+      if(tokenTree == null && tree.is(Tree.Kind.METHOD)) {
+        tokenTree = ((MethodTree) tree).returnType();
+      }
+      if(tokenTree==null){
+        tokenTree = tree;
+      }
+      SyntaxToken syntaxToken = new InternalSyntaxToken(((JavaTree) tokenTree).getToken());
+      for (SyntaxTrivia syntaxTrivia : syntaxToken.trivias()) {
+        if (syntaxTrivia.comment().startsWith("/**")) {
+          return syntaxTrivia.comment();
         }
+      }
     }
     return null;
   }
