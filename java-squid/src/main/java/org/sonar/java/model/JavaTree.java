@@ -50,7 +50,9 @@ public abstract class JavaTree extends AstNode implements Tree {
     @Override
     public String toString() {
       return "[null]";
-    };
+    }
+
+    ;
 
   };
 
@@ -68,9 +70,9 @@ public abstract class JavaTree extends AstNode implements Tree {
 
   public JavaTree(@Nullable AstNode astNode) {
     super(
-      astNode == null ? NULL_NODE : astNode.getType(),
-      astNode == null ? NULL_NODE.toString() : astNode.getType().toString(),
-      astNode == null ? null : astNode.getToken());
+        astNode == null ? NULL_NODE : astNode.getType(),
+        astNode == null ? NULL_NODE.toString() : astNode.getType().toString(),
+        astNode == null ? null : astNode.getToken());
     this.astNode = astNode;
   }
 
@@ -121,8 +123,15 @@ public abstract class JavaTree extends AstNode implements Tree {
   }
 
   @Override
-  public final boolean is(Kind kind) {
-    return getKind() == null ? false : getKind() == kind;
+  public final boolean is(Kind... kind) {
+    if (getKind() != null) {
+      for (Kind kindIter : kind) {
+        if (getKind() == kindIter) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public abstract Kind getKind();
@@ -188,11 +197,11 @@ public abstract class JavaTree extends AstNode implements Tree {
     @Override
     public Iterator<Tree> childrenIterator() {
       return Iterators.concat(
-        Iterators.singletonIterator(packageName),
-        imports.iterator(),
-        types.iterator(),
-        packageAnnotations.iterator()
-        );
+          Iterators.singletonIterator(packageName),
+          imports.iterator(),
+          types.iterator(),
+          packageAnnotations.iterator()
+      );
     }
   }
 
@@ -229,8 +238,8 @@ public abstract class JavaTree extends AstNode implements Tree {
     @Override
     public Iterator<Tree> childrenIterator() {
       return Iterators.singletonIterator(
-        qualifiedIdentifier
-        );
+          qualifiedIdentifier
+      );
     }
   }
 
@@ -264,8 +273,8 @@ public abstract class JavaTree extends AstNode implements Tree {
     @Override
     public Iterator<Tree> childrenIterator() {
       return Iterators.singletonIterator(
-        bound
-        );
+          bound
+      );
     }
   }
 
@@ -295,10 +304,10 @@ public abstract class JavaTree extends AstNode implements Tree {
     @Override
     public Iterator<Tree> childrenIterator() {
       return Iterators.concat(
-        // (Godin): workaround for generics
-        Iterators.<Tree>emptyIterator(),
-        typeAlternatives.iterator()
-        );
+          // (Godin): workaround for generics
+          Iterators.<Tree>emptyIterator(),
+          typeAlternatives.iterator()
+      );
     }
   }
 
@@ -439,9 +448,9 @@ public abstract class JavaTree extends AstNode implements Tree {
     @Override
     public Iterator<Tree> childrenIterator() {
       return Iterators.concat(
-        Iterators.singletonIterator(type),
-        typeArguments.iterator()
-        );
+          Iterators.singletonIterator(type),
+          typeArguments.iterator()
+      );
     }
   }
 
