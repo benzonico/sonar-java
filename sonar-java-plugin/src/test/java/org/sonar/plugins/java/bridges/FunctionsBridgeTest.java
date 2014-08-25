@@ -23,7 +23,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.sonar.api.batch.SensorContext;
-import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.measures.Measure;
 import org.sonar.api.resources.Resource;
 import org.sonar.java.ast.api.JavaMetric;
@@ -32,12 +31,10 @@ import org.sonar.squidbridge.api.SourceFile;
 import org.sonar.squidbridge.api.SourceMethod;
 import org.sonar.squidbridge.measures.Metric;
 
-import java.util.List;
-
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 public class FunctionsBridgeTest {
@@ -77,20 +74,20 @@ public class FunctionsBridgeTest {
     bridge.onFile(squidFile, sonarFile);
 
     ArgumentCaptor<Measure> measureCaptor = ArgumentCaptor.forClass(Measure.class);
-    verify(context, times(4)).saveMeasure(eq(sonarFile), measureCaptor.capture());
+    verify(context, never()).saveMeasure(eq(sonarFile), measureCaptor.capture());
 
-    List<Measure> measures = measureCaptor.getAllValues();
-
-    assertThat(measures.get(0).getMetric()).isSameAs(CoreMetrics.FUNCTIONS);
-    assertThat(measures.get(0).getValue()).isEqualTo(1);
-
-    assertThat(measures.get(1).getMetric()).isSameAs(CoreMetrics.ACCESSORS);
-    assertThat(measures.get(1).getValue()).isEqualTo(1);
-
-    assertThat(measures.get(2).getMetric()).isSameAs(CoreMetrics.COMPLEXITY_IN_FUNCTIONS);
-    assertThat(measures.get(2).getValue()).isEqualTo(0);
-
-    assertThat(measures.get(3).getMetric()).isSameAs(CoreMetrics.FUNCTION_COMPLEXITY_DISTRIBUTION);
+//    List<Measure> measures = measureCaptor.getAllValues();
+//
+//    assertThat(measures.get(0).getMetric()).isSameAs(CoreMetrics.FUNCTIONS);
+//    assertThat(measures.get(0).getValue()).isEqualTo(1);
+//
+//    assertThat(measures.get(1).getMetric()).isSameAs(CoreMetrics.ACCESSORS);
+//    assertThat(measures.get(1).getValue()).isEqualTo(1);
+//
+//    assertThat(measures.get(2).getMetric()).isSameAs(CoreMetrics.COMPLEXITY_IN_FUNCTIONS);
+//    assertThat(measures.get(2).getValue()).isEqualTo(0);
+//
+//    assertThat(measures.get(3).getMetric()).isSameAs(CoreMetrics.FUNCTION_COMPLEXITY_DISTRIBUTION);
   }
 
 }
