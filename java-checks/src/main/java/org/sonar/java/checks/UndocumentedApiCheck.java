@@ -43,6 +43,7 @@ import org.sonar.plugins.java.api.tree.VariableTree;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Rule(key = "UndocumentedApi", priority = Priority.MAJOR,
     tags = {"convention"})
@@ -60,6 +61,8 @@ public class UndocumentedApiCheck extends SubscriptionBaseVisitor {
   private AccessorVisitorST accessorVisitorST;
   private PublicApiChecker publicApiChecker;
   private String packageName;
+  private Pattern setterPattern = Pattern.compile("set[A-Z].*");
+  private Pattern getterPattern = Pattern.compile("(get|is)[A-Z].*");
 
   @Override
   public List<Tree.Kind> nodesToVisit() {
@@ -107,19 +110,19 @@ public class UndocumentedApiCheck extends SubscriptionBaseVisitor {
 
   private String getType(Tree tree) {
     String result = "";
-    if(tree.is(Tree.Kind.CLASS)) {
+    if (tree.is(Tree.Kind.CLASS)) {
       result = "class";
-    } else if(tree.is(Tree.Kind.INTERFACE)) {
+    } else if (tree.is(Tree.Kind.INTERFACE)) {
       result = "interface";
-    } else if(tree.is(Tree.Kind.ENUM)) {
+    } else if (tree.is(Tree.Kind.ENUM)) {
       result = "enum";
-    } else if(tree.is(Tree.Kind.ANNOTATION_TYPE)) {
+    } else if (tree.is(Tree.Kind.ANNOTATION_TYPE)) {
       result = "annotation";
-    } else if(tree.is(Tree.Kind.CONSTRUCTOR)) {
+    } else if (tree.is(Tree.Kind.CONSTRUCTOR)) {
       result = "constructor";
-    } else if(tree.is(Tree.Kind.METHOD)) {
+    } else if (tree.is(Tree.Kind.METHOD)) {
       result = "method";
-    } else if(tree.is(Tree.Kind.VARIABLE)) {
+    } else if (tree.is(Tree.Kind.VARIABLE)) {
       result = "field";
     }
     return result;
@@ -138,7 +141,14 @@ public class UndocumentedApiCheck extends SubscriptionBaseVisitor {
   }
 
   private boolean isAccessor(Tree tree) {
-    return tree.is(Tree.Kind.METHOD) && accessorVisitorST.isAccessor(classTrees.peek(), (MethodTree) tree);
+    if (!classTrees.isEmpty() && !classTrees.peek().is(Tree.Kind.INTERFACE) && tree.is(Tree.Kind.METHOD)) {
+      MethodTree methodTree = (MethodTree) tree;
+      String name = methodTree.simpleName().name();
+      return (setterPattern.matcher(name).matches() && methodTree.parameters().size() == 1) ||
+          (getterPattern.matcher(name).matches() && methodTree.parameters().isEmpty());
+    }
+    //return tree.is(Tree.Kind.METHOD) && accessorVisitorST.isAccessor(classTrees.peek(), (MethodTree) tree);
+    return false;
   }
 
   private boolean isPublicApi(Tree tree) {
@@ -186,7 +196,7 @@ public class UndocumentedApiCheck extends SubscriptionBaseVisitor {
       }
       for (Tree typeParam : methodTree.typeParameters()) {
         //FIXME : type param is not implemented.
-        builder.add("<" + ((JavaTree)typeParam).getToken() + ">");
+        builder.add("<" + ((JavaTree) typeParam).getToken() + ">");
       }
     }
     return builder.build();
@@ -197,9 +207,9 @@ public class UndocumentedApiCheck extends SubscriptionBaseVisitor {
   }
 
   private boolean hasNonVoidReturnType(Tree tree) {
-    if(tree.is(Tree.Kind.METHOD)) {
+    if (tree.is(Tree.Kind.METHOD)) {
       Tree returnType = ((MethodTree) tree).returnType();
-      return returnType==null || !(returnType.is(Tree.Kind.PRIMITIVE_TYPE) && "void".equals(((PrimitiveTypeTree) returnType).keyword().text()));
+      return returnType == null || !(returnType.is(Tree.Kind.PRIMITIVE_TYPE) && "void".equals(((PrimitiveTypeTree) returnType).keyword().text()));
     }
     return false;
   }

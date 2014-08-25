@@ -23,11 +23,14 @@ import com.google.common.base.Preconditions;
 import org.sonar.java.model.InternalSyntaxToken;
 import org.sonar.java.model.JavaTree;
 import org.sonar.plugins.java.api.tree.AnnotationTree;
+import org.sonar.plugins.java.api.tree.ArrayTypeTree;
 import org.sonar.plugins.java.api.tree.ClassTree;
 import org.sonar.plugins.java.api.tree.IdentifierTree;
+import org.sonar.plugins.java.api.tree.MemberSelectExpressionTree;
 import org.sonar.plugins.java.api.tree.MethodTree;
 import org.sonar.plugins.java.api.tree.Modifier;
 import org.sonar.plugins.java.api.tree.ModifiersTree;
+import org.sonar.plugins.java.api.tree.ParameterizedTypeTree;
 import org.sonar.plugins.java.api.tree.SyntaxToken;
 import org.sonar.plugins.java.api.tree.SyntaxTrivia;
 import org.sonar.plugins.java.api.tree.Tree;
@@ -126,6 +129,15 @@ public class PublicApiChecker {
       }
       if(tokenTree == null && tree.is(Tree.Kind.METHOD)) {
         tokenTree = ((MethodTree) tree).returnType();
+        while(tokenTree!=null && tokenTree.is(Tree.Kind.ARRAY_TYPE, Tree.Kind.PARAMETERIZED_TYPE, Tree.Kind.MEMBER_SELECT)) {
+          if(tokenTree.is(Tree.Kind.ARRAY_TYPE)) {
+            tokenTree = ((ArrayTypeTree) tokenTree).type();
+          } else if(tokenTree.is(Tree.Kind.MEMBER_SELECT)) {
+            tokenTree = ((MemberSelectExpressionTree) tokenTree).expression();
+          }else  if (tokenTree.is(Tree.Kind.PARAMETERIZED_TYPE)) {
+            tokenTree = ((ParameterizedTypeTree) tokenTree).type();
+          }
+        }
       }
       if(tokenTree==null){
         tokenTree = tree;

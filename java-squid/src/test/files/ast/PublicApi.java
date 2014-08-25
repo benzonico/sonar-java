@@ -54,12 +54,35 @@ public enum undocumentedEnumPublic{
   A;
 }
 
-interface interfaze{}
+interface interfaze{
+  String[] undocumentedMethodPublic();
+
+  /**
+   * Documented method in interface.
+   */
+  String[][] documentedMethodPublic();
+}
 /**
  * Documented Class.
  */
 public interface documentedInterfacePublic {
   void methodPublic();
+
+  /**
+   * Documentation.
+   */
+  java.lang.String documentedMethodPublic();
+
+  /**
+   * Documented.
+   * @return a map.
+   */
+  Map<String,String> documentedGetPublic();
+
+  /**
+   * Documented method.
+   */
+  java.util.Map<String,String>[] documentedGetPublic();
 }
 public interface undocumentedInterfacePublic {
 
