@@ -20,6 +20,7 @@
 package org.sonar.java.ast.visitors;
 
 import com.google.common.base.Preconditions;
+import com.sonar.sslr.api.Token;
 import org.sonar.java.model.InternalSyntaxToken;
 import org.sonar.java.model.JavaTree;
 import org.sonar.plugins.java.api.tree.AnnotationTree;
@@ -61,7 +62,7 @@ public class PublicApiChecker {
   public boolean isPublicApi(ClassTree classTree, MethodTree methodTree) {
     Preconditions.checkNotNull(classTree);
     if (classTree.is(Tree.Kind.INTERFACE, Tree.Kind.ANNOTATION_TYPE)) {
-      return true;
+      return !hasOverrideAnnotation(methodTree);
     } else if (isEmptyDefaultConstructor(methodTree) || hasOverrideAnnotation(methodTree)) {
       return false;
     }
@@ -139,17 +140,22 @@ public class PublicApiChecker {
           }
         }
       }
-      if(tokenTree==null){
+      if (tokenTree == null) {
         tokenTree = tree;
       }
-      SyntaxToken syntaxToken = new InternalSyntaxToken(((JavaTree) tokenTree).getToken());
-      for (SyntaxTrivia syntaxTrivia : syntaxToken.trivias()) {
-        if (syntaxTrivia.comment().startsWith("/**")) {
-          return syntaxTrivia.comment();
-        }
-      }
+      Token token = ((JavaTree) tokenTree).getToken();
+      return getCommentFromToken(token);
     }
     return null;
   }
 
+  public String getCommentFromToken(Token token) {
+    SyntaxToken syntaxToken = new InternalSyntaxToken(token);
+    for (SyntaxTrivia syntaxTrivia : syntaxToken.trivias()) {
+      if (syntaxTrivia.comment().startsWith("/**")) {
+        return syntaxTrivia.comment();
+      }
+    }
+    return null;
+  }
 }

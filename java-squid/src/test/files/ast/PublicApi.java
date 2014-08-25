@@ -1,3 +1,5 @@
+import java.lang.Override;
+
 //All identifier ending with public are expected to be public API per publicApiVisitorST
 class A {
 
@@ -29,7 +31,7 @@ public class documentedClassPublic {
   /**
    * Documented Method.
    */
-  public void documentedMethodPublic(){}
+  public void documentedMethodInClassPublic(){}
   public static void method2Public(){}
 
   /**
@@ -60,7 +62,10 @@ interface interfaze{
   /**
    * Documented method in interface.
    */
-  String[][] documentedMethodPublic();
+  String[][] documentedDbleArrayMethodPublic();
+
+  @Override
+  String method();
 }
 /**
  * Documented Class.

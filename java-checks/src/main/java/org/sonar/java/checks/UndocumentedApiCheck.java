@@ -147,7 +147,6 @@ public class UndocumentedApiCheck extends SubscriptionBaseVisitor {
       return (setterPattern.matcher(name).matches() && methodTree.parameters().size() == 1) ||
           (getterPattern.matcher(name).matches() && methodTree.parameters().isEmpty());
     }
-    //return tree.is(Tree.Kind.METHOD) && accessorVisitorST.isAccessor(classTrees.peek(), (MethodTree) tree);
     return false;
   }
 
@@ -207,7 +206,8 @@ public class UndocumentedApiCheck extends SubscriptionBaseVisitor {
   }
 
   private boolean hasNonVoidReturnType(Tree tree) {
-    if (tree.is(Tree.Kind.METHOD)) {
+    //Backward compatibility : ignore methods from annoations.
+    if (tree.is(Tree.Kind.METHOD) && !classTrees.peek().is(Tree.Kind.ANNOTATION_TYPE)) {
       Tree returnType = ((MethodTree) tree).returnType();
       return returnType == null || !(returnType.is(Tree.Kind.PRIMITIVE_TYPE) && "void".equals(((PrimitiveTypeTree) returnType).keyword().text()));
     }
