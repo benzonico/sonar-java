@@ -19,209 +19,82 @@
  */
 package org.sonar.java.checks;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import com.sonar.sslr.api.AstAndTokenVisitor;
-import com.sonar.sslr.api.AstNode;
-import com.sonar.sslr.api.Token;
-import com.sonar.sslr.api.TokenType;
-import com.sonar.sslr.api.Trivia;
+import com.google.common.collect.Lists;
 import org.sonar.check.BelongsToProfile;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
-import org.sonar.java.ast.api.JavaKeyword;
-import org.sonar.java.ast.api.JavaPunctuator;
-import org.sonar.java.ast.api.JavaTokenType;
-import org.sonar.java.ast.parser.JavaGrammar;
-import org.sonar.java.model.JavaTreeMaker;
-import org.sonar.plugins.java.api.tree.AnnotationTree;
+import org.sonar.java.resolve.SemanticModel;
+import org.sonar.plugins.java.api.JavaFileScannerContext;
+import org.sonar.plugins.java.api.tree.CompilationUnitTree;
+import org.sonar.plugins.java.api.tree.ExpressionTree;
+import org.sonar.plugins.java.api.tree.IdentifierTree;
+import org.sonar.plugins.java.api.tree.ImportTree;
+import org.sonar.plugins.java.api.tree.MemberSelectExpressionTree;
+import org.sonar.plugins.java.api.tree.Tree;
 import org.sonar.plugins.java.api.tree.Tree.Kind;
-import org.sonar.squidbridge.checks.SquidCheck;
-import org.sonar.sslr.parser.LexerlessGrammar;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.Deque;
+import java.util.LinkedList;
+import java.util.List;
 
 @Rule(
-  key = "UselessImportCheck",
-  priority = Priority.MINOR,
-  tags = {"unused"})
+    key = "UselessImportCheck",
+    priority = Priority.MINOR,
+    tags = {"unused"})
 @BelongsToProfile(title = "Sonar way", priority = Priority.MINOR)
-public class UselessImportCheck extends SquidCheck<LexerlessGrammar> implements AstAndTokenVisitor {
-
-  private static final TokenType[] IDENTIFIER_TYPES = ImmutableList.<TokenType>builder()
-    .add(JavaKeyword.values())
-    .add(JavaTokenType.IDENTIFIER)
-    .build()
-    .toArray(new TokenType[0]);
-
-  private final Map<String, Integer> lineByImportReference = Maps.newHashMap();
-  private final Set<String> pendingImports = Sets.newHashSet();
-  private final Set<String> pendingReferences = Sets.newHashSet();
-
-  private String currentPackage;
+public class UselessImportCheck extends SubscriptionBaseVisitor {
 
   @Override
-  public void init() {
-    subscribeTo(JavaGrammar.PACKAGE_DECLARATION);
-    subscribeTo(JavaGrammar.IMPORT_DECLARATION);
-    subscribeTo(JavaGrammar.CLASS_TYPE);
-    subscribeTo(JavaGrammar.CREATED_NAME);
-    subscribeTo(Kind.ANNOTATION);
-    subscribeTo(JavaKeyword.THROWS);
-    subscribeTo(JavaTreeMaker.QUALIFIED_EXPRESSION_KINDS);
+  public List<Kind> nodesToVisit() {
+    return Lists.newArrayList();
   }
 
   @Override
-  public void visitFile(AstNode astNode) {
-    pendingReferences.clear();
-    lineByImportReference.clear();
-    pendingImports.clear();
+  public void scanFile(JavaFileScannerContext context) {
+    super.scanFile(context);
+    SemanticModel semanticModel = (SemanticModel) context.getSemanticModel();
+    CompilationUnitTree cut = context.getTree();
+    String packageName = "";
+    if (cut.packageName() != null) {
+      packageName = concatenate(cut.packageName());
+    }
+    System.out.println(packageName);
+    for (ImportTree importTree : cut.imports()) {
+      if(importTree.qualifiedIdentifier().is(Kind.MEMBER_SELECT)) {
+        MemberSelectExpressionTree mset = (MemberSelectExpressionTree) importTree.qualifiedIdentifier();
+        if(semanticModel.getSymbol(importTree)!=null){
 
-    currentPackage = "";
-  }
-
-  @Override
-  public void visitNode(AstNode node) {
-    if (node.is(JavaGrammar.PACKAGE_DECLARATION)) {
-      currentPackage = mergeIdentifiers(node.getFirstChild(JavaTreeMaker.QUALIFIED_EXPRESSION_KINDS));
-    } else if (node.is(JavaGrammar.IMPORT_DECLARATION)) {
-      if (!isStaticImport(node)) {
-        String reference = mergeIdentifiers(node.getFirstChild(JavaTreeMaker.QUALIFIED_EXPRESSION_KINDS));
-
-        if ("java.lang".equals(reference)) {
-          getContext().createLineViolation(this, "Remove this unnecessary import: java.lang classes are always implicitly imported.", node);
-        } else if (isImportFromSamePackage(reference)) {
-          getContext().createLineViolation(this, "Remove this unnecessary import: same package classes are always implicitly imported.", node);
-        } else if (!isImportOnDemand(node)) {
-          if (isJavaLangImport(reference)) {
-            getContext().createLineViolation(this, "Remove this unnecessary import: java.lang classes are always implicitly imported.", node);
-          } else if (isDuplicatedImport(reference)) {
-            getContext().createLineViolation(this, "Remove this duplicated import.", node);
-          } else {
-            lineByImportReference.put(reference, node.getTokenLine());
-            pendingImports.add(reference);
-          }
+        System.out.println(semanticModel.getSymbol(importTree).getName() + semanticModel.getUsages(semanticModel.getSymbol(importTree)).size());
         }
-      }
-    } else if (!node.getParent().is(JavaGrammar.IMPORT_DECLARATION, Kind.MEMBER_SELECT)) {
-      pendingReferences.addAll(getReferences(node));
-    }
-  }
-
-  @Override
-  public void leaveFile(AstNode node) {
-    for (String reference : pendingReferences) {
-      updatePendingImports(reference);
-    }
-
-    for (String pendingImport : pendingImports) {
-      getContext().createLineViolation(this, "Remove this unused import '" + pendingImport + "'.", lineByImportReference.get(pendingImport));
-    }
-  }
-
-  private static boolean isJavaLangImport(String reference) {
-    return reference.startsWith("java.lang.") && reference.indexOf('.', "java.lang.".length()) == -1;
-  }
-
-  private boolean isImportFromSamePackage(String reference) {
-    return !currentPackage.isEmpty() &&
-      reference.startsWith(currentPackage) &&
-      (reference.length() == currentPackage.length() || reference.substring(reference.indexOf(currentPackage)).startsWith("."));
-  }
-
-  private boolean isDuplicatedImport(String reference) {
-    return pendingImports.contains(reference);
-  }
-
-  private void updatePendingImports(String reference) {
-    String firstClassReference = reference;
-    if (isFullyQualified(firstClassReference)) {
-      firstClassReference = extractFirstClassName(firstClassReference);
-    }
-    Iterator<String> it = pendingImports.iterator();
-    while (it.hasNext()) {
-      String pendingImport = it.next();
-      if (pendingImport.endsWith(firstClassReference)) {
-        it.remove();
+        System.out.println(concatenate(mset));
+      } else {
+        IdentifierTree identifierTree = (IdentifierTree) importTree.qualifiedIdentifier();
+        System.out.println(identifierTree.name());
       }
     }
   }
 
-  private static boolean isFullyQualified(String reference) {
-    return reference.indexOf('.') != -1;
-  }
 
-  private static Collection<String> getReferences(AstNode node) {
-    if (node.is(JavaKeyword.THROWS)) {
-      ImmutableList.Builder<String> builder = ImmutableList.builder();
+  private String concatenate(ExpressionTree tree) {
+    Deque<String> pieces = new LinkedList<String>();
 
-      for (AstNode qualifiedIdentifier : node.getNextSibling().getChildren(JavaTreeMaker.QUALIFIED_EXPRESSION_KINDS)) {
-        builder.add(mergeIdentifiers(qualifiedIdentifier));
-      }
-
-      return builder.build();
-    } else {
-      AstNode actualNode = node;
-      if (node.is(Kind.ANNOTATION)) {
-        actualNode = (AstNode) ((AnnotationTree) node).annotationType();
-      }
-
-      return Collections.singleton(mergeIdentifiers(actualNode));
+    ExpressionTree expr = tree;
+    while (expr.is(Tree.Kind.MEMBER_SELECT)) {
+      MemberSelectExpressionTree mse = (MemberSelectExpressionTree) expr;
+      pieces.push(mse.identifier().name());
+      pieces.push(".");
+      expr = mse.expression();
     }
-  }
+    if (expr.is(Tree.Kind.IDENTIFIER)) {
+      IdentifierTree idt = (IdentifierTree) expr;
+      pieces.push(idt.name());
+    }
 
-  private static String mergeIdentifiers(AstNode node) {
     StringBuilder sb = new StringBuilder();
-    for (AstNode child : node.getDescendants(IDENTIFIER_TYPES)) {
-      sb.append(child.getTokenOriginalValue());
-      sb.append('.');
+    for (String piece : pieces) {
+      sb.append(piece);
     }
-    sb.deleteCharAt(sb.length() - 1);
-
     return sb.toString();
-  }
-
-  private static boolean isStaticImport(AstNode node) {
-    return node.hasDirectChildren(JavaKeyword.STATIC);
-  }
-
-  private static boolean isImportOnDemand(AstNode node) {
-    return node.hasDirectChildren(JavaPunctuator.STAR);
-  }
-
-  @Override
-  public void visitToken(Token token) {
-    if (token.hasTrivia()) {
-      for (Trivia trivia : token.getTrivia()) {
-        updatePendingImportsForComments(trivia.getToken().getOriginalValue());
-      }
-    }
-  }
-
-  private void updatePendingImportsForComments(String comment) {
-    Iterator<String> it = pendingImports.iterator();
-    while (it.hasNext()) {
-      String pendingImport = it.next();
-
-      if (comment.contains(extractLastClassName(pendingImport))) {
-        it.remove();
-      }
-    }
-  }
-
-  private static String extractFirstClassName(String reference) {
-    int firstIndexOfDot = reference.indexOf('.');
-    return firstIndexOfDot == -1 ? reference : reference.substring(0, firstIndexOfDot);
-  }
-
-  private static String extractLastClassName(String reference) {
-    int lastIndexOfDot = reference.lastIndexOf('.');
-    return lastIndexOfDot == -1 ? reference : reference.substring(lastIndexOfDot + 1);
   }
 
 }
