@@ -22,6 +22,7 @@ package org.sonar.java.checks;
 import org.junit.Rule;
 import org.junit.Test;
 import org.sonar.java.JavaAstScanner;
+import org.sonar.java.model.VisitorsBridge;
 import org.sonar.squidbridge.api.SourceFile;
 import org.sonar.squidbridge.checks.CheckMessagesVerifier;
 import org.sonar.squidbridge.checks.CheckMessagesVerifierRule;
@@ -35,7 +36,7 @@ public class IndentationCheckTest {
 
   @Test
   public void detected() {
-    SourceFile file = JavaAstScanner.scanSingleFile(new File("src/test/files/checks/IndentationCheck.java"), new IndentationCheck());
+    SourceFile file = JavaAstScanner.scanSingleFile(new File("src/test/files/checks/IndentationCheck.java"), new VisitorsBridge(new IndentationCheck()));
     checkMessagesVerifier.verify(file.getCheckMessages())
       .next().atLine(3).withMessage("Make this line start at column 3.")
       .next().atLine(10)
@@ -55,7 +56,7 @@ public class IndentationCheckTest {
     IndentationCheck check = new IndentationCheck();
     check.indentationLevel = 4;
 
-    SourceFile file = JavaAstScanner.scanSingleFile(new File("src/test/files/checks/IndentationCheck.java"), check);
+    SourceFile file = JavaAstScanner.scanSingleFile(new File("src/test/files/checks/IndentationCheck.java"), new VisitorsBridge(check));
     CheckMessagesVerifier.verify(file.getCheckMessages())
       .next().atLine(2).withMessage("Make this line start at column 5.")
       .next().atLine(7)

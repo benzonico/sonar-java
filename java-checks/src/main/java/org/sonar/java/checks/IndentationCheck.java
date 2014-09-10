@@ -19,48 +19,44 @@
  */
 package org.sonar.java.checks;
 
+import com.google.common.collect.Lists;
 import com.sonar.sslr.api.AstNode;
-import com.sonar.sslr.api.AstNodeType;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.check.RuleProperty;
 import org.sonar.java.ast.parser.JavaGrammar;
 import org.sonar.java.model.JavaTree;
+import org.sonar.plugins.java.api.JavaFileScannerContext;
+import org.sonar.plugins.java.api.tree.BlockTree;
 import org.sonar.plugins.java.api.tree.CaseGroupTree;
 import org.sonar.plugins.java.api.tree.CaseLabelTree;
+import org.sonar.plugins.java.api.tree.ClassTree;
+import org.sonar.plugins.java.api.tree.Tree;
 import org.sonar.plugins.java.api.tree.Tree.Kind;
-import org.sonar.squidbridge.checks.SquidCheck;
-import org.sonar.sslr.parser.LexerlessGrammar;
 
 import java.util.List;
 
 @Rule(
-  key = "IndentationCheck",
-  priority = Priority.MAJOR,
-  tags = {"convention"})
-public class IndentationCheck extends SquidCheck<LexerlessGrammar> {
+    key = "IndentationCheck",
+    priority = Priority.MAJOR,
+    tags = {"convention"})
+public class IndentationCheck extends SubscriptionBaseVisitor {
 
-  private static final AstNodeType[] BLOCK_TYPES = new AstNodeType[] {
-    JavaGrammar.CLASS_BODY,
-    JavaGrammar.ENUM_BODY,
-    JavaGrammar.INTERFACE_BODY,
-    Kind.BLOCK,
-    JavaGrammar.SWITCH_STATEMENT,
-    JavaGrammar.SWITCH_BLOCK_STATEMENT_GROUP
-  };
-
-  private static final AstNodeType[] CHECKED_TYPES = new AstNodeType[] {
-    JavaGrammar.TYPE_DECLARATION,
-    JavaGrammar.CLASS_BODY_DECLARATION,
-    JavaGrammar.INTERFACE_BODY_DECLARATION,
-    JavaGrammar.BLOCK_STATEMENT
+  private static final Kind[] BLOCK_TYPES = new Kind[]{
+      Kind.CLASS,
+      Kind.INTERFACE,
+      Kind.ENUM,
+      Kind.CLASS,
+      Kind.BLOCK,
+      Kind.SWITCH_STATEMENT,
+      Kind.CASE_GROUP
   };
 
   private static final int DEFAULT_INDENTATION_LEVEL = 2;
 
   @RuleProperty(
-    key = "indentationLevel",
-    defaultValue = "" + DEFAULT_INDENTATION_LEVEL)
+      key = "indentationLevel",
+      defaultValue = "" + DEFAULT_INDENTATION_LEVEL)
   public int indentationLevel = DEFAULT_INDENTATION_LEVEL;
 
   private int expectedLevel;
@@ -68,57 +64,68 @@ public class IndentationCheck extends SquidCheck<LexerlessGrammar> {
   private int lastCheckedLine;
 
   @Override
-  public void init() {
-    subscribeTo(BLOCK_TYPES);
-    subscribeTo(CHECKED_TYPES);
+  public List<Kind> nodesToVisit() {
+    return Lists.newArrayList(BLOCK_TYPES);
   }
 
   @Override
-  public void visitFile(AstNode node) {
+  public void scanFile(JavaFileScannerContext context) {
     expectedLevel = 0;
     isBlockAlreadyReported = false;
     lastCheckedLine = 0;
+    super.scanFile(context);
   }
 
   @Override
-  public void visitNode(AstNode node) {
-    if (node.is(BLOCK_TYPES)) {
-      expectedLevel += indentationLevel;
-      isBlockAlreadyReported = false;
+  public void visitNode(Tree tree) {
+    expectedLevel += indentationLevel;
+    isBlockAlreadyReported = false;
 
-      // TODO This is quite horrible, but this is how the rule was actually behaving...
-      if (node.is(JavaGrammar.SWITCH_BLOCK_STATEMENT_GROUP)) {
-        List<CaseLabelTree> labels = ((CaseGroupTree) node).labels();
-        if (labels.size() >= 2) {
-          lastCheckedLine = ((JavaTree) labels.get(labels.size() - 2)).getAstNode().getLastToken().getLine();
-        }
+    if (tree.is(Kind.CASE_GROUP)) {
+      List<CaseLabelTree> labels = ((CaseGroupTree) tree).labels();
+      if (labels.size() >= 2) {
+        lastCheckedLine = ((JavaTree) labels.get(labels.size() - 2)).getAstNode().getLastToken().getLine();
       }
-    } else if (node.getToken().getColumn() != expectedLevel && !isExcluded(node)) {
-      getContext().createLineViolation(this, "Make this line start at column " + (expectedLevel + 1) + ".", node);
-      isBlockAlreadyReported = true;
+    }
+
+    if(tree.is(Kind.CLASS, Kind.ENUM, Kind.INTERFACE)) {
+      checkIndentation(((ClassTree) tree).members());
+    }
+    if(tree.is(Kind.CASE_GROUP)) {
+      checkIndentation(((CaseGroupTree) tree).body());
+    }
+    if(tree.is(Kind.BLOCK)) {
+      checkIndentation(((BlockTree) tree).body());
+    }
+  }
+
+  private void checkIndentation(List<? extends Tree> trees) {
+    for (Tree tree : trees) {
+      if (((JavaTree)tree).getToken().getColumn() != expectedLevel && !isExcluded(tree)) {
+        addIssue(tree, "Make this line start at column " + (expectedLevel + 1) + ".");
+        isBlockAlreadyReported = true;
+      }
     }
   }
 
   @Override
-  public void leaveNode(AstNode node) {
-    if (node.is(BLOCK_TYPES)) {
-      expectedLevel -= indentationLevel;
-      isBlockAlreadyReported = false;
-    }
-
-    lastCheckedLine = node.getLastToken().getLine();
+  public void leaveNode(Tree tree) {
+    expectedLevel -= indentationLevel;
+    isBlockAlreadyReported = false;
+    lastCheckedLine = ((JavaTree)tree).getLastToken().getLine();
   }
 
-  private boolean isExcluded(AstNode node) {
-    return isBlockAlreadyReported || !isLineFirstStatement(node) || isInAnnonymousClass(node);
+  private boolean isExcluded(Tree node) {
+    return isBlockAlreadyReported || !isLineFirstStatement((JavaTree) node);// || isInAnnonymousClass(node);
   }
 
-  private boolean isLineFirstStatement(AstNode node) {
-    return lastCheckedLine != node.getTokenLine();
+  private boolean isLineFirstStatement(JavaTree javaTree) {
+    return lastCheckedLine != javaTree.getTokenLine();
   }
 
   private static boolean isInAnnonymousClass(AstNode node) {
     return node.hasAncestor(JavaGrammar.CLASS_CREATOR_REST);
   }
+
 
 }

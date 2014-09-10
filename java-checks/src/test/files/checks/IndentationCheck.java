@@ -37,7 +37,7 @@ if (0) {                          // Compliant - already reported
   }
 }
 
-enum Foo {
+enum Bar {
   A,
  B,
    C;
@@ -49,7 +49,7 @@ enum Foo {
  }
 }
 
-interface Foo {
+interface Qix {
 
  void foo1();                     // Non-Compliant
 
@@ -57,7 +57,7 @@ interface Foo {
 
 }
 
-class Foo {
+class Baz {
 
   void foo() {
     new MyInterface() {
@@ -76,7 +76,7 @@ class Foo {
 
 }
 
- class Foo {                      // Non-Compliant
+ class Qiz {                      // Non-Compliant
   public void foo() {
     switch (0) {
       case 0:
