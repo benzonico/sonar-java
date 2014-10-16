@@ -31,7 +31,9 @@ import org.sonar.plugins.java.api.tree.ArrayTypeTree;
 import org.sonar.plugins.java.api.tree.AssignmentExpressionTree;
 import org.sonar.plugins.java.api.tree.BaseTreeVisitor;
 import org.sonar.plugins.java.api.tree.BinaryExpressionTree;
+import org.sonar.plugins.java.api.tree.BreakStatementTree;
 import org.sonar.plugins.java.api.tree.ConditionalExpressionTree;
+import org.sonar.plugins.java.api.tree.ContinueStatementTree;
 import org.sonar.plugins.java.api.tree.EnumConstantTree;
 import org.sonar.plugins.java.api.tree.ExpressionStatementTree;
 import org.sonar.plugins.java.api.tree.IdentifierTree;
@@ -89,6 +91,18 @@ public class ExpressionVisitor extends BaseTreeVisitor {
 
   @Override
   public void visitLabeledStatement(LabeledStatementTree tree) {
+    //Ignore label (dedicated visitor)
+    scan(tree.statement());
+  }
+
+  @Override
+  public void visitBreakStatement(BreakStatementTree tree) {
+    //Ignore break (dedicated visitor)
+  }
+
+  @Override
+  public void visitContinueStatement(ContinueStatementTree tree) {
+    //Ignore continue (dedicated visitor)
   }
 
   @Override
