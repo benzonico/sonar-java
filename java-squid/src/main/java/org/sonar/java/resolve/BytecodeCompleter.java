@@ -254,7 +254,11 @@ public class BytecodeCompleter implements Symbol.Completer {
       Preconditions.checkState(name.endsWith(classSymbol.name), "Name : '" + name + "' should ends with " + classSymbol.name);
       Preconditions.checkState(!isSynthetic(flags), name + " is synthetic");
       className = name;
-      classSymbol.flags |= filterBytecodeFlags(flags);
+      if((classSymbol.flags & Flags.ACCESS_FLAGS) != 0) {
+        classSymbol.flags |= filterBytecodeFlags(flags & ~Flags.ACCESS_FLAGS);
+      } else {
+        classSymbol.flags |= filterBytecodeFlags(flags);
+      }
       classSymbol.members = new Scope(classSymbol);
       if (superName == null) {
         Preconditions.checkState("java/lang/Object".equals(className), "superName must be null only for java/lang/Object, but not for " + className);
