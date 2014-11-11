@@ -137,7 +137,7 @@ public abstract class AbstractAnalyzer {
   }
 
   public final void readExecutionData(File jacocoExecutionData, SensorContext context) throws IOException {
-    ExecutionDataVisitor executionDataVisitor = new ExecutionDataVisitor();
+    ExecutionDataVisitor executionDataVisitor = new ExecutionDataVisitor(readCoveragePerTests);
 
     if (jacocoExecutionData == null || !jacocoExecutionData.isFile()) {
       JaCoCoExtensions.LOG.info("Project coverage is set to 0% as no JaCoCo execution data has been dumped: {}", jacocoExecutionData);

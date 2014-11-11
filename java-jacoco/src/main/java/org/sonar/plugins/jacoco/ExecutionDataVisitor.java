@@ -34,20 +34,29 @@ public class ExecutionDataVisitor implements ISessionInfoVisitor, IExecutionData
 
   private ExecutionDataStore executionDataStore;
   private ExecutionDataStore merged = new ExecutionDataStore();
+  private boolean readCoveragePerTests;
+
+  public ExecutionDataVisitor(boolean readCoveragePerTests) {
+    this.readCoveragePerTests = readCoveragePerTests;
+  }
 
   @Override
   public void visitSessionInfo(SessionInfo info) {
-    String sessionId = info.getId();
-    executionDataStore = sessions.get(sessionId);
-    if (executionDataStore == null) {
-      executionDataStore = new ExecutionDataStore();
-      sessions.put(sessionId, executionDataStore);
+    if(readCoveragePerTests) {
+      String sessionId = info.getId();
+      executionDataStore = sessions.get(sessionId);
+      if (executionDataStore == null) {
+        executionDataStore = new ExecutionDataStore();
+        sessions.put(sessionId, executionDataStore);
+      }
     }
   }
 
   @Override
   public void visitClassExecution(ExecutionData data) {
-    executionDataStore.put(data);
+    if(readCoveragePerTests) {
+      executionDataStore.put(data);
+    }
     merged.put(defensiveCopy(data));
   }
 
