@@ -408,11 +408,14 @@ public class Resolve {
   public Symbol findMethod(Env env, Symbol.TypeSymbol site, String name, List<Type> argTypes) {
     Symbol bestSoFar = symbolNotFound;
 
-    // TODO search in supertypes
     for (Symbol symbol : site.members().lookup(name)) {
       if (symbol.kind == Symbol.MTH) {
         bestSoFar = selectBest(env, site, argTypes, symbol, bestSoFar);
       }
+    }
+    //Symbol not found, look in supertypes.
+    if (bestSoFar.kind >= Symbol.ERRONEOUS && site.getSuperclass() != null) {
+      bestSoFar = selectBest(env, site, argTypes, findMethod(env, site.getSuperclass().symbol, name, argTypes), bestSoFar);
     }
 
     // best guess: method with unique name
