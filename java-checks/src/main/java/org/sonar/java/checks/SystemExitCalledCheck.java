@@ -20,7 +20,7 @@
 package org.sonar.java.checks;
 
 import com.google.common.collect.ImmutableList;
-import org.sonar.check.BelongsToProfile;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.plugins.java.api.tree.ExpressionTree;
@@ -28,15 +28,20 @@ import org.sonar.plugins.java.api.tree.IdentifierTree;
 import org.sonar.plugins.java.api.tree.MemberSelectExpressionTree;
 import org.sonar.plugins.java.api.tree.MethodInvocationTree;
 import org.sonar.plugins.java.api.tree.Tree;
+import org.sonar.squidbridge.annotations.ActivatedByDefault;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 
 @Rule(
-  key = "S1147",
-  priority = Priority.CRITICAL)
-@BelongsToProfile(title = "Sonar way", priority = Priority.CRITICAL)
+    key = "S1147",
+    priority = Priority.CRITICAL)
+@ActivatedByDefault
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.ARCHITECTURE_RELIABILITY)
+@SqaleConstantRemediation("20min")
 public class SystemExitCalledCheck extends SubscriptionBaseVisitor {
 
   private String idName;
@@ -49,9 +54,9 @@ public class SystemExitCalledCheck extends SubscriptionBaseVisitor {
   @Override
   public void visitNode(Tree tree) {
     idName = "";
-    MethodInvocationTree mit = (MethodInvocationTree)tree;
+    MethodInvocationTree mit = (MethodInvocationTree) tree;
     if (isCallToExitMethod(mit)) {
-      addIssue(tree, "Remove this call to \""+idName+"\" or ensure it is really required.");
+      addIssue(tree, "Remove this call to \"" + idName + "\" or ensure it is really required.");
     }
   }
 
@@ -72,9 +77,9 @@ public class SystemExitCalledCheck extends SubscriptionBaseVisitor {
       pieces.push(".");
       expr = mse.expression();
     }
-    if(expr.is(Tree.Kind.METHOD_INVOCATION)) {
+    if (expr.is(Tree.Kind.METHOD_INVOCATION)) {
       pieces.push("()");
-      pieces.push(concatenate(((MethodInvocationTree)expr).methodSelect()));
+      pieces.push(concatenate(((MethodInvocationTree) expr).methodSelect()));
     }
     if (expr.is(Tree.Kind.IDENTIFIER)) {
       IdentifierTree idt = (IdentifierTree) expr;
@@ -83,7 +88,7 @@ public class SystemExitCalledCheck extends SubscriptionBaseVisitor {
 
     StringBuilder sb = new StringBuilder();
     idName = pieces.getLast();
-    for (String piece: pieces) {
+    for (String piece : pieces) {
       sb.append(piece);
     }
     return sb.toString();

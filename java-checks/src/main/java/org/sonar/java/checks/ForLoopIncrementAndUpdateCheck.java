@@ -22,7 +22,7 @@ package org.sonar.java.checks;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import org.sonar.check.BelongsToProfile;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.java.resolve.Symbol;
@@ -34,6 +34,9 @@ import org.sonar.plugins.java.api.tree.MemberSelectExpressionTree;
 import org.sonar.plugins.java.api.tree.MethodInvocationTree;
 import org.sonar.plugins.java.api.tree.Tree;
 import org.sonar.plugins.java.api.tree.UnaryExpressionTree;
+import org.sonar.squidbridge.annotations.ActivatedByDefault;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 import java.util.Collection;
 import java.util.List;
@@ -42,7 +45,9 @@ import java.util.List;
     key = "S1994",
     priority = Priority.CRITICAL,
     tags = {"bug"})
-@BelongsToProfile(title = "Sonar way", priority = Priority.CRITICAL)
+@ActivatedByDefault
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.LOGIC_RELIABILITY)
+@SqaleConstantRemediation("20min")
 public class ForLoopIncrementAndUpdateCheck extends SubscriptionBaseVisitor {
 
   @Override
@@ -131,7 +136,7 @@ public class ForLoopIncrementAndUpdateCheck extends SubscriptionBaseVisitor {
 
     @Override
     public void visitMethodInvocation(MethodInvocationTree tree) {
-      if(tree.methodSelect().is(Tree.Kind.MEMBER_SELECT)) {
+      if (tree.methodSelect().is(Tree.Kind.MEMBER_SELECT)) {
         checkIdentifier(((MemberSelectExpressionTree) tree.methodSelect()).identifier());
       } else {
         scan(tree.methodSelect());

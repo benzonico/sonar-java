@@ -24,6 +24,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 import org.sonar.api.rule.RuleKey;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.java.model.declaration.ClassTreeImpl;
@@ -34,6 +35,8 @@ import org.sonar.plugins.java.api.JavaFileScannerContext;
 import org.sonar.plugins.java.api.tree.BaseTreeVisitor;
 import org.sonar.plugins.java.api.tree.ClassTree;
 import org.sonar.plugins.java.api.tree.Tree;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 import java.util.Collection;
 import java.util.Map;
@@ -43,6 +46,8 @@ import java.util.Set;
     key = FieldMatchMethodNameCheck.RULE_KEY,
     priority = Priority.MAJOR,
     tags = {"brain-overload"})
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.LOGIC_RELIABILITY)
+@SqaleConstantRemediation("10min")
 public class FieldMatchMethodNameCheck extends BaseTreeVisitor implements JavaFileScanner {
 
   public static final String RULE_KEY = "S1701";
@@ -84,7 +89,7 @@ public class FieldMatchMethodNameCheck extends BaseTreeVisitor implements JavaFi
       for (Multiset.Entry<String> entry : fields.entrySet()) {
         if (entry.getCount() > 1) {
           Tree field = semanticModel.getTree(indexSymbol.get(entry.getElement()));
-          if(field != null) {
+          if (field != null) {
             context.addIssue(field, ruleKey, "Rename the \"" + fieldsOriginal.get(entry.getElement()) + "\" member.");
           }
         }

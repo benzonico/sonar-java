@@ -87,7 +87,7 @@ public class AbstractDeprecatedChecker extends SubscriptionBaseVisitor {
 
   public boolean isDeprecated(AnnotationTree tree) {
     return tree.annotationType().is(Kind.IDENTIFIER) &&
-      "Deprecated".equals(((IdentifierTree) tree.annotationType()).name());
+        "Deprecated".equals(((IdentifierTree) tree.annotationType()).name());
   }
 
 }

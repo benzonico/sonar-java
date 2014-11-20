@@ -20,6 +20,7 @@
 package org.sonar.java.checks;
 
 import com.google.common.io.Files;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.api.utils.SonarException;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
@@ -27,6 +28,8 @@ import org.sonar.check.RuleProperty;
 import org.sonar.java.CharsetAwareVisitor;
 import org.sonar.plugins.java.api.JavaFileScannerContext;
 import org.sonar.plugins.java.api.tree.Tree;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,17 +39,19 @@ import java.util.Iterator;
 import java.util.List;
 
 @Rule(
-  key = "S1451",
-  priority = Priority.BLOCKER,
-  tags={"convention"})
+    key = "S1451",
+    priority = Priority.BLOCKER,
+    tags = {"convention"})
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.SECURITY_FEATURES)
+@SqaleConstantRemediation("5min")
 public class FileHeaderCheck extends SubscriptionBaseVisitor implements CharsetAwareVisitor {
 
   private static final String DEFAULT_HEADER_FORMAT = "";
 
   @RuleProperty(
-    key = "headerFormat",
-    type = "TEXT",
-    defaultValue = DEFAULT_HEADER_FORMAT)
+      key = "headerFormat",
+      type = "TEXT",
+      defaultValue = DEFAULT_HEADER_FORMAT)
   public String headerFormat = DEFAULT_HEADER_FORMAT;
 
   private Charset charset;

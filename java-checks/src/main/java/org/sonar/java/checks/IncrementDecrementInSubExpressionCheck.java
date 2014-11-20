@@ -20,6 +20,7 @@
 package org.sonar.java.checks;
 
 import org.sonar.api.rule.RuleKey;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.plugins.java.api.JavaFileScanner;
@@ -30,10 +31,14 @@ import org.sonar.plugins.java.api.tree.ExpressionTree;
 import org.sonar.plugins.java.api.tree.Tree;
 import org.sonar.plugins.java.api.tree.Tree.Kind;
 import org.sonar.plugins.java.api.tree.UnaryExpressionTree;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 @Rule(
-  key = IncrementDecrementInSubExpressionCheck.RULE_KEY,
-  priority = Priority.MAJOR)
+    key = IncrementDecrementInSubExpressionCheck.RULE_KEY,
+    priority = Priority.MAJOR)
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.LOGIC_RELIABILITY)
+@SqaleConstantRemediation("5min")
 public class IncrementDecrementInSubExpressionCheck extends BaseTreeVisitor implements JavaFileScanner {
 
   public static final String RULE_KEY = "S881";
@@ -71,9 +76,9 @@ public class IncrementDecrementInSubExpressionCheck extends BaseTreeVisitor impl
 
   private static boolean isIncrementOrDecrement(Tree tree) {
     return tree.is(Kind.PREFIX_INCREMENT) ||
-      tree.is(Kind.PREFIX_DECREMENT) ||
-      tree.is(Kind.POSTFIX_INCREMENT) ||
-      tree.is(Kind.POSTFIX_DECREMENT);
+        tree.is(Kind.PREFIX_DECREMENT) ||
+        tree.is(Kind.POSTFIX_INCREMENT) ||
+        tree.is(Kind.POSTFIX_DECREMENT);
   }
 
 }

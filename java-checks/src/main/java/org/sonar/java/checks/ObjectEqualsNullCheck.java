@@ -20,7 +20,7 @@
 package org.sonar.java.checks;
 
 import org.sonar.api.rule.RuleKey;
-import org.sonar.check.BelongsToProfile;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.plugins.java.api.JavaFileScanner;
@@ -30,11 +30,16 @@ import org.sonar.plugins.java.api.tree.ExpressionTree;
 import org.sonar.plugins.java.api.tree.MemberSelectExpressionTree;
 import org.sonar.plugins.java.api.tree.MethodInvocationTree;
 import org.sonar.plugins.java.api.tree.Tree;
+import org.sonar.squidbridge.annotations.ActivatedByDefault;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 @Rule(
-  key = ObjectEqualsNullCheck.KEY,
-  priority = Priority.CRITICAL)
-@BelongsToProfile(title = "Sonar way", priority = Priority.CRITICAL)
+    key = ObjectEqualsNullCheck.KEY,
+    priority = Priority.CRITICAL)
+@ActivatedByDefault
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.INSTRUCTION_RELIABILITY)
+@SqaleConstantRemediation("5min")
 public class ObjectEqualsNullCheck extends BaseTreeVisitor implements JavaFileScanner {
 
   public static final String KEY = "S1318";
@@ -53,8 +58,8 @@ public class ObjectEqualsNullCheck extends BaseTreeVisitor implements JavaFileSc
     super.visitMethodInvocation(tree);
 
     if (isCallToEquals(tree.methodSelect()) &&
-      tree.arguments().size() == 1 &&
-      isNull(tree.arguments().get(0))) {
+        tree.arguments().size() == 1 &&
+        isNull(tree.arguments().get(0))) {
       context.addIssue(tree, RULE_KEY, "Use \"object == null\" instead of \"object.equals(null)\" to test for nullity to prevent null pointer exceptions.");
     }
   }

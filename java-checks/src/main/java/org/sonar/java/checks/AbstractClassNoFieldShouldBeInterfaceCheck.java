@@ -20,6 +20,7 @@
 package org.sonar.java.checks;
 
 import org.sonar.api.rule.RuleKey;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.plugins.java.api.JavaFileScanner;
@@ -29,11 +30,15 @@ import org.sonar.plugins.java.api.tree.ClassTree;
 import org.sonar.plugins.java.api.tree.MethodTree;
 import org.sonar.plugins.java.api.tree.Modifier;
 import org.sonar.plugins.java.api.tree.Tree;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 @Rule(
     key = AbstractClassNoFieldShouldBeInterfaceCheck.RULE_KEY,
     priority = Priority.MAJOR,
     tags = {"java8"})
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.ARCHITECTURE_CHANGEABILITY)
+@SqaleConstantRemediation("10min")
 public class AbstractClassNoFieldShouldBeInterfaceCheck extends BaseTreeVisitor implements JavaFileScanner {
 
 
@@ -49,15 +54,15 @@ public class AbstractClassNoFieldShouldBeInterfaceCheck extends BaseTreeVisitor 
 
   @Override
   public void visitClass(ClassTree tree) {
-    if(classIsAbstract(tree) && classHasNoField(tree) && !classHasProtectedMethod(tree)) {
-      context.addIssue(tree, RULE, "Convert the abstract class \""+tree.simpleName().name()+"\" into an interface");
+    if (classIsAbstract(tree) && classHasNoField(tree) && !classHasProtectedMethod(tree)) {
+      context.addIssue(tree, RULE, "Convert the abstract class \"" + tree.simpleName().name() + "\" into an interface");
     }
     super.visitClass(tree);
   }
 
   private boolean classHasProtectedMethod(ClassTree tree) {
-    for(Tree member : tree.members()) {
-      if(member.is(Tree.Kind.METHOD) && ((MethodTree) member).modifiers().modifiers().contains(Modifier.PROTECTED)) {
+    for (Tree member : tree.members()) {
+      if (member.is(Tree.Kind.METHOD) && ((MethodTree) member).modifiers().modifiers().contains(Modifier.PROTECTED)) {
         return true;
       }
     }
@@ -69,8 +74,8 @@ public class AbstractClassNoFieldShouldBeInterfaceCheck extends BaseTreeVisitor 
   }
 
   private boolean classHasNoField(ClassTree tree) {
-    for(Tree member : tree.members()) {
-      if(member.is(Tree.Kind.VARIABLE)) {
+    for (Tree member : tree.members()) {
+      if (member.is(Tree.Kind.VARIABLE)) {
         return false;
       }
     }

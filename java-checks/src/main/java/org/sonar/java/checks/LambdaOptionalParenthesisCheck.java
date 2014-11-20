@@ -20,12 +20,15 @@
 package org.sonar.java.checks;
 
 import com.google.common.collect.ImmutableList;
-import org.sonar.check.BelongsToProfile;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.plugins.java.api.tree.LambdaExpressionTree;
 import org.sonar.plugins.java.api.tree.Tree;
 import org.sonar.plugins.java.api.tree.VariableTree;
+import org.sonar.squidbridge.annotations.ActivatedByDefault;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 import java.util.List;
 
@@ -34,7 +37,9 @@ import java.util.List;
     key = "S1611",
     priority = Priority.MINOR,
     tags = {"java8"})
-@BelongsToProfile(title = "Sonar way", priority = Priority.MINOR)
+@ActivatedByDefault
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.READABILITY)
+@SqaleConstantRemediation("2min")
 public class LambdaOptionalParenthesisCheck extends SubscriptionBaseVisitor {
 
   @Override
@@ -45,7 +50,7 @@ public class LambdaOptionalParenthesisCheck extends SubscriptionBaseVisitor {
   @Override
   public void visitNode(Tree tree) {
     LambdaExpressionTree let = (LambdaExpressionTree) tree;
-    if(let.openParenToken() != null && let.parameters().size() == 1) {
+    if (let.openParenToken() != null && let.parameters().size() == 1) {
       VariableTree param = let.parameters().get(0);
       String ident = param.simpleName().name();
       addIssue(param, "Remove the parentheses around the \"" + ident + "\" parameter");

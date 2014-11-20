@@ -20,6 +20,7 @@
 package org.sonar.java.checks;
 
 import org.sonar.api.rule.RuleKey;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.plugins.java.api.JavaFileScanner;
@@ -31,6 +32,8 @@ import org.sonar.plugins.java.api.tree.IdentifierTree;
 import org.sonar.plugins.java.api.tree.MemberSelectExpressionTree;
 import org.sonar.plugins.java.api.tree.NewArrayTree;
 import org.sonar.plugins.java.api.tree.Tree;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 import java.util.List;
 
@@ -38,6 +41,8 @@ import java.util.List;
     key = RepeatAnnotationCheck.RULE_KEY,
     priority = Priority.CRITICAL,
     tags = {"java8"})
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.READABILITY)
+@SqaleConstantRemediation("2min")
 public class RepeatAnnotationCheck extends BaseTreeVisitor implements JavaFileScanner {
 
   public static final String RULE_KEY = "S1710";
@@ -67,7 +72,7 @@ public class RepeatAnnotationCheck extends BaseTreeVisitor implements JavaFileSc
       return false;
     }
     String annotationName = getAnnotationName(initializers.get(0));
-    if(annotationName.isEmpty()){
+    if (annotationName.isEmpty()) {
       return false;
     }
     for (int i = 1; i < initializers.size(); i++) {

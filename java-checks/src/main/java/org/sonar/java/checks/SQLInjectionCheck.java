@@ -20,7 +20,7 @@
 package org.sonar.java.checks;
 
 import com.google.common.collect.ImmutableList;
-import org.sonar.check.BelongsToProfile;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.java.model.AbstractTypedTree;
@@ -35,6 +35,9 @@ import org.sonar.plugins.java.api.tree.MemberSelectExpressionTree;
 import org.sonar.plugins.java.api.tree.MethodInvocationTree;
 import org.sonar.plugins.java.api.tree.Tree;
 import org.sonar.plugins.java.api.tree.VariableTree;
+import org.sonar.squidbridge.annotations.ActivatedByDefault;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
@@ -44,7 +47,9 @@ import java.util.List;
     key = "S2077",
     priority = Priority.CRITICAL,
     tags = {"cwe", "owasp-top10", "security", "sql"})
-@BelongsToProfile(title = "Sonar way", priority = Priority.CRITICAL)
+@ActivatedByDefault
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.INPUT_VALIDATION_AND_REPRESENTATION)
+@SqaleConstantRemediation("20min")
 public class SQLInjectionCheck extends SubscriptionBaseVisitor {
 
   private String parameterName;
@@ -63,8 +68,8 @@ public class SQLInjectionCheck extends SubscriptionBaseVisitor {
       ExpressionTree arg = methodTree.arguments().get(0);
       parameterName = "";
       if (isDynamicString(methodTree, arg, null, true)) {
-        String message = "\""+parameterName+"\" is provided externally to the method and not sanitized before use.";
-        if(isHibernateCall) {
+        String message = "\"" + parameterName + "\" is provided externally to the method and not sanitized before use.";
+        if (isHibernateCall) {
           message = "Use Hibernate's parameter binding instead of concatenation.";
         }
         addIssue(methodTree, message);
@@ -75,6 +80,7 @@ public class SQLInjectionCheck extends SubscriptionBaseVisitor {
   private boolean isDynamicString(MethodInvocationTree methodTree, ExpressionTree arg, @Nullable Symbol currentlyChecking) {
     return isDynamicString(methodTree, arg, currentlyChecking, false);
   }
+
   private boolean isDynamicString(MethodInvocationTree methodTree, ExpressionTree arg, @Nullable Symbol currentlyChecking, boolean firstLevel) {
     if (arg.is(Tree.Kind.IDENTIFIER)) {
       return isIdentifierDynamicString(methodTree, (IdentifierTree) arg, currentlyChecking, firstLevel);
@@ -82,7 +88,7 @@ public class SQLInjectionCheck extends SubscriptionBaseVisitor {
       BinaryExpressionTree binaryArg = (BinaryExpressionTree) arg;
       return isDynamicString(methodTree, binaryArg.rightOperand(), currentlyChecking) || isDynamicString(methodTree, binaryArg.leftOperand(), currentlyChecking);
 
-    } else if(arg.is(Tree.Kind.METHOD_INVOCATION)) {
+    } else if (arg.is(Tree.Kind.METHOD_INVOCATION)) {
       return false;
     }
     return !arg.is(Tree.Kind.STRING_LITERAL);
@@ -90,18 +96,18 @@ public class SQLInjectionCheck extends SubscriptionBaseVisitor {
 
   private boolean isIdentifierDynamicString(MethodInvocationTree methodTree, IdentifierTree arg, @Nullable Symbol currentlyChecking, boolean firstLevel) {
     Symbol symbol = getSemanticModel().getReference(arg);
-    if(symbol.equals(currentlyChecking) || isConstant(symbol)) {
+    if (symbol.equals(currentlyChecking) || isConstant(symbol)) {
       return false;
     }
 
     Tree enclosingBlockTree = getSemanticModel().getTree(getSemanticModel().getEnv(methodTree));
     Tree argEnclosingDeclarationTree = getSemanticModel().getTree(getSemanticModel().getEnv(symbol));
-    if(enclosingBlockTree.equals(argEnclosingDeclarationTree)) {
+    if (enclosingBlockTree.equals(argEnclosingDeclarationTree)) {
       //symbol is a local variable, check it is not a dynamic string.
 
       //Check declaration
       VariableTree declaration = (VariableTree) getSemanticModel().getTree(symbol);
-      if(declaration.initializer() != null && isDynamicString(methodTree, declaration.initializer(), currentlyChecking)) {
+      if (declaration.initializer() != null && isDynamicString(methodTree, declaration.initializer(), currentlyChecking)) {
         return true;
       }
       //check usages by revisiting the enclosing tree.
@@ -111,7 +117,7 @@ public class SQLInjectionCheck extends SubscriptionBaseVisitor {
       return visitor.dynamicString;
     }
     //arg is not a local variable nor a constant, so it is a parameter or a field.
-    parameterName =  arg.name();
+    parameterName = arg.name();
     return symbol.owner().isKind(Symbol.MTH) && !firstLevel;
   }
 
@@ -181,7 +187,7 @@ public class SQLInjectionCheck extends SubscriptionBaseVisitor {
 
     @Override
     public void visitAssignmentExpression(AssignmentExpressionTree tree) {
-      if(!stopInspection && tree.variable().is(Tree.Kind.IDENTIFIER) && usages.contains(tree.variable())) {
+      if (!stopInspection && tree.variable().is(Tree.Kind.IDENTIFIER) && usages.contains(tree.variable())) {
         dynamicString |= isDynamicString(methodInvocationTree, tree.expression(), currentlyChecking);
       }
       super.visitAssignmentExpression(tree);
@@ -189,7 +195,7 @@ public class SQLInjectionCheck extends SubscriptionBaseVisitor {
 
     @Override
     public void visitMethodInvocation(MethodInvocationTree tree) {
-      if(tree.equals(methodInvocationTree)) {
+      if (tree.equals(methodInvocationTree)) {
         //stop inspection, all concerned usages have been visited.
         stopInspection = true;
       } else {

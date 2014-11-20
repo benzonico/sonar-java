@@ -23,6 +23,7 @@ import com.sonar.sslr.api.RecognitionException;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.squidbridge.AstScannerExceptionHandler;
+import org.sonar.squidbridge.annotations.NoSqale;
 import org.sonar.squidbridge.checks.SquidCheck;
 import org.sonar.sslr.parser.LexerlessGrammar;
 
@@ -30,6 +31,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 @Rule(key = "ParsingError", priority = Priority.MAJOR)
+@NoSqale
 public class ParsingErrorCheck extends SquidCheck<LexerlessGrammar> implements AstScannerExceptionHandler {
 
   @Override

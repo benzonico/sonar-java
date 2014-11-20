@@ -20,7 +20,7 @@
 package org.sonar.java.checks;
 
 import org.sonar.api.rule.RuleKey;
-import org.sonar.check.BelongsToProfile;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.check.RuleProperty;
@@ -32,14 +32,19 @@ import org.sonar.plugins.java.api.tree.Modifier;
 import org.sonar.plugins.java.api.tree.ModifiersTree;
 import org.sonar.plugins.java.api.tree.Tree;
 import org.sonar.plugins.java.api.tree.VariableTree;
+import org.sonar.squidbridge.annotations.ActivatedByDefault;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 import java.util.regex.Pattern;
 
 @Rule(
-  key = LoggersDeclarationCheck.KEY,
-  priority = Priority.MAJOR,
-  tags={"convention"})
-@BelongsToProfile(title = "Sonar way", priority = Priority.MAJOR)
+    key = LoggersDeclarationCheck.KEY,
+    priority = Priority.MAJOR,
+    tags = {"convention"})
+@ActivatedByDefault
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.UNDERSTANDABILITY)
+@SqaleConstantRemediation("5min")
 public class LoggersDeclarationCheck extends BaseTreeVisitor implements JavaFileScanner {
 
   public static final String KEY = "S1312";
@@ -48,8 +53,8 @@ public class LoggersDeclarationCheck extends BaseTreeVisitor implements JavaFile
   private static final String DEFAULT_FORMAT = "LOG(?:GER)?";
 
   @RuleProperty(
-    key = "format",
-    defaultValue = "" + DEFAULT_FORMAT)
+      key = "format",
+      defaultValue = "" + DEFAULT_FORMAT)
   public String format = DEFAULT_FORMAT;
 
   private Pattern pattern = null;
@@ -66,8 +71,8 @@ public class LoggersDeclarationCheck extends BaseTreeVisitor implements JavaFile
 
   private static boolean isPrivateStaticFinal(ModifiersTree tree) {
     return hasModifier(tree, Modifier.PRIVATE) &&
-      hasModifier(tree, Modifier.STATIC) &&
-      hasModifier(tree, Modifier.FINAL);
+        hasModifier(tree, Modifier.STATIC) &&
+        hasModifier(tree, Modifier.FINAL);
   }
 
   private static boolean hasModifier(ModifiersTree tree, Modifier expectedModifier) {
@@ -113,7 +118,7 @@ public class LoggersDeclarationCheck extends BaseTreeVisitor implements JavaFile
     IdentifierTree identifierTree = (IdentifierTree) tree;
 
     return "Log".equals(identifierTree.name()) ||
-      "Logger".equals(identifierTree.name());
+        "Logger".equals(identifierTree.name());
   }
 
 }

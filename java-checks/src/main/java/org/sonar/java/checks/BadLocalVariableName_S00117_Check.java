@@ -20,7 +20,7 @@
 package org.sonar.java.checks;
 
 import org.sonar.api.rule.RuleKey;
-import org.sonar.check.BelongsToProfile;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.check.RuleProperty;
@@ -30,15 +30,20 @@ import org.sonar.plugins.java.api.tree.BaseTreeVisitor;
 import org.sonar.plugins.java.api.tree.ClassTree;
 import org.sonar.plugins.java.api.tree.Tree;
 import org.sonar.plugins.java.api.tree.VariableTree;
+import org.sonar.squidbridge.annotations.ActivatedByDefault;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 import java.util.regex.Pattern;
 
 @Rule(
-  key = BadLocalVariableName_S00117_Check.RULE_KEY,
-  priority = Priority.MAJOR,
-  tags={"convention"})
-@BelongsToProfile(title = "Sonar way", priority = Priority.MAJOR)
-public class BadLocalVariableName_S00117_Check  extends BaseTreeVisitor implements JavaFileScanner {
+    key = BadLocalVariableName_S00117_Check.RULE_KEY,
+    priority = Priority.MAJOR,
+    tags = {"convention"})
+@ActivatedByDefault
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.READABILITY)
+@SqaleConstantRemediation("20min")
+public class BadLocalVariableName_S00117_Check extends BaseTreeVisitor implements JavaFileScanner {
 
   public static final String RULE_KEY = "S00117";
   private final RuleKey ruleKey = RuleKey.of(CheckList.REPOSITORY_KEY, RULE_KEY);
@@ -46,8 +51,8 @@ public class BadLocalVariableName_S00117_Check  extends BaseTreeVisitor implemen
   private static final String DEFAULT_FORMAT = "^[a-z][a-zA-Z0-9]*$";
 
   @RuleProperty(
-    key = "format",
-    defaultValue = "" + DEFAULT_FORMAT)
+      key = "format",
+      defaultValue = "" + DEFAULT_FORMAT)
   public String format = DEFAULT_FORMAT;
 
   private Pattern pattern = null;

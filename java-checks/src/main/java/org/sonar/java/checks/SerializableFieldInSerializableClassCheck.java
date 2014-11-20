@@ -20,7 +20,7 @@
 package org.sonar.java.checks;
 
 import com.google.common.collect.ImmutableList;
-import org.sonar.check.BelongsToProfile;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.java.model.AbstractTypedTree;
@@ -32,6 +32,9 @@ import org.sonar.plugins.java.api.tree.MethodTree;
 import org.sonar.plugins.java.api.tree.Modifier;
 import org.sonar.plugins.java.api.tree.Tree;
 import org.sonar.plugins.java.api.tree.VariableTree;
+import org.sonar.squidbridge.annotations.ActivatedByDefault;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -40,7 +43,9 @@ import java.util.List;
     key = "S1948",
     priority = Priority.MAJOR,
     tags = {"bug", "cwe"})
-@BelongsToProfile(title = "Sonar way", priority = Priority.MAJOR)
+@ActivatedByDefault
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.DATA_RELIABILITY)
+@SqaleConstantRemediation("30min")
 public class SerializableFieldInSerializableClassCheck extends SubscriptionBaseVisitor {
 
   @Override
@@ -72,8 +77,8 @@ public class SerializableFieldInSerializableClassCheck extends SubscriptionBaseV
         MethodTree methodTree = (MethodTree) member;
         //FIXME detect methods based on type of arg and throws, not arity.
         if (methodTree.modifiers().modifiers().contains(Modifier.PRIVATE) && methodTree.parameters().size() == 1) {
-          hasWriteObject |= "writeObject".equals(methodTree.simpleName().name()) && methodTree.throwsClauses().size()==1;
-          hasReadObject |= "readObject".equals(methodTree.simpleName().name()) && methodTree.throwsClauses().size()==2;
+          hasWriteObject |= "writeObject".equals(methodTree.simpleName().name()) && methodTree.throwsClauses().size() == 1;
+          hasReadObject |= "readObject".equals(methodTree.simpleName().name()) && methodTree.throwsClauses().size() == 2;
         }
       }
     }
@@ -89,7 +94,7 @@ public class SerializableFieldInSerializableClassCheck extends SubscriptionBaseV
       return true;
     } else if (tree.is(Tree.Kind.CLASS)) {
       Symbol.TypeSymbol symbol = ((ClassTreeImpl) tree).getSymbol();
-      if(symbol==null) {
+      if (symbol == null) {
         return false;
       }
       return implementsSerializable(symbol.getType());
@@ -101,7 +106,7 @@ public class SerializableFieldInSerializableClassCheck extends SubscriptionBaseV
     if (type == null || type.isTagged(Type.UNKNOWN)) {
       return false;
     }
-    if(type.isTagged(Type.ARRAY)) {
+    if (type.isTagged(Type.ARRAY)) {
       return implementsSerializable(((Type.ArrayType) type).elementType());
     }
     Type.ClassType classType = (Type.ClassType) type;
@@ -115,7 +120,7 @@ public class SerializableFieldInSerializableClassCheck extends SubscriptionBaseV
   private boolean hasSupertypeSerializable(Type.ClassType type) {
     Symbol.TypeSymbol symbol = type.getSymbol();
     for (Type interfaceType : symbol.getInterfaces()) {
-      if(implementsSerializable(interfaceType)) {
+      if (implementsSerializable(interfaceType)) {
         return true;
       }
     }

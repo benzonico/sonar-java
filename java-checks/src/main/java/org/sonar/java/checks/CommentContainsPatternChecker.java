@@ -51,7 +51,7 @@ public class CommentContainsPatternChecker {
       String[] lines = comment.split("\r\n?|\n");
       for (int i = 0; i < lines.length; i++) {
         if (StringUtils.containsIgnoreCase(lines[i], pattern) && !isLetterAround(lines[i], pattern)) {
-          newCheck.addIssue(((InternalSyntaxTrivia)syntaxTrivia).getLine()+i, message);
+          newCheck.addIssue(((InternalSyntaxTrivia) syntaxTrivia).getLine() + i, message);
         }
       }
     }

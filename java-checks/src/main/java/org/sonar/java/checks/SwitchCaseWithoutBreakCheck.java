@@ -21,7 +21,7 @@ package org.sonar.java.checks;
 
 import com.google.common.collect.Iterables;
 import org.sonar.api.rule.RuleKey;
-import org.sonar.check.BelongsToProfile;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.plugins.java.api.JavaFileScanner;
@@ -33,15 +33,20 @@ import org.sonar.plugins.java.api.tree.ContinueStatementTree;
 import org.sonar.plugins.java.api.tree.ReturnStatementTree;
 import org.sonar.plugins.java.api.tree.SwitchStatementTree;
 import org.sonar.plugins.java.api.tree.ThrowStatementTree;
+import org.sonar.squidbridge.annotations.ActivatedByDefault;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 @Rule(
-  key = SwitchCaseWithoutBreakCheck.RULE_KEY,
-  priority = Priority.CRITICAL,
-  tags={"pitfall"})
-@BelongsToProfile(title = "Sonar way", priority = Priority.CRITICAL)
+    key = SwitchCaseWithoutBreakCheck.RULE_KEY,
+    priority = Priority.CRITICAL,
+    tags = {"pitfall"})
+@ActivatedByDefault
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.LOGIC_RELIABILITY)
+@SqaleConstantRemediation("20min")
 public class SwitchCaseWithoutBreakCheck extends BaseTreeVisitor implements JavaFileScanner {
 
   public static final String RULE_KEY = "S128";
@@ -51,6 +56,7 @@ public class SwitchCaseWithoutBreakCheck extends BaseTreeVisitor implements Java
 
   private final Deque<CaseGroupTree> invalidCaseGroups = new ArrayDeque<CaseGroupTree>();
   private CaseGroupTree currentTree = null;
+
   @Override
   public void scanFile(JavaFileScannerContext context) {
     this.context = context;
@@ -61,7 +67,7 @@ public class SwitchCaseWithoutBreakCheck extends BaseTreeVisitor implements Java
   @Override
   public void visitSwitchStatement(SwitchStatementTree tree) {
     scan(tree.expression());
-    if(!tree.cases().isEmpty()){
+    if (!tree.cases().isEmpty()) {
       scan(tree.cases().subList(0, tree.cases().size() - 1));
     }
   }

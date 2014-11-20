@@ -20,7 +20,7 @@
 package org.sonar.java.checks;
 
 import org.sonar.api.rule.RuleKey;
-import org.sonar.check.BelongsToProfile;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.plugins.java.api.JavaFileScanner;
@@ -29,12 +29,17 @@ import org.sonar.plugins.java.api.tree.BaseTreeVisitor;
 import org.sonar.plugins.java.api.tree.ClassTree;
 import org.sonar.plugins.java.api.tree.MethodTree;
 import org.sonar.plugins.java.api.tree.Tree;
+import org.sonar.squidbridge.annotations.ActivatedByDefault;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 @Rule(
-  key = MethodNameSameAsClassCheck.RULE_KEY,
-  priority = Priority.MAJOR,
-  tags={"pitfall"})
-@BelongsToProfile(title = "Sonar way", priority = Priority.MAJOR)
+    key = MethodNameSameAsClassCheck.RULE_KEY,
+    priority = Priority.MAJOR,
+    tags = {"pitfall"})
+@ActivatedByDefault
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.ARCHITECTURE_RELIABILITY)
+@SqaleConstantRemediation("5min")
 public class MethodNameSameAsClassCheck extends BaseTreeVisitor implements JavaFileScanner {
 
   public static final String RULE_KEY = "S1223";
@@ -53,7 +58,7 @@ public class MethodNameSameAsClassCheck extends BaseTreeVisitor implements JavaF
     for (Tree member : tree.members()) {
       if (member.is(Tree.Kind.METHOD)) {
         MethodTree method = (MethodTree) member;
-        if (tree.simpleName()!=null && method.simpleName().name().equals(tree.simpleName().name())) {
+        if (tree.simpleName() != null && method.simpleName().name().equals(tree.simpleName().name())) {
           context.addIssue(method, ruleKey, "Rename this method to prevent any misunderstanding or make it a constructor.");
         }
       }

@@ -20,10 +20,13 @@
 package org.sonar.java.checks;
 
 import com.google.common.collect.Sets;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.plugins.java.api.JavaFileScanner;
 import org.sonar.plugins.java.api.JavaFileScannerContext;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 import java.io.File;
 import java.util.Set;
@@ -32,6 +35,8 @@ import java.util.Set;
     key = PackageInfoCheck.RULE_KEY,
     priority = Priority.MAJOR,
     tags = {"convention"})
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.UNDERSTANDABILITY)
+@SqaleConstantRemediation("20min")
 public class PackageInfoCheck implements JavaFileScanner {
 
   public static final String RULE_KEY = "S1228";
@@ -42,7 +47,7 @@ public class PackageInfoCheck implements JavaFileScanner {
   @Override
   public void scanFile(JavaFileScannerContext context) {
     File parentFile = context.getFile().getParentFile();
-    if(!directoriesWithPackageFile.contains(parentFile)) {
+    if (!directoriesWithPackageFile.contains(parentFile)) {
       directoriesWithoutPackageFile.add(parentFile);
     }
     if ("package-info.java".equals(context.getFile().getName())) {

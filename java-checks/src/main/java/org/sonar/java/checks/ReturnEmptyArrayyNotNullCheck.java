@@ -22,7 +22,7 @@ package org.sonar.java.checks;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import org.sonar.check.BelongsToProfile;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.plugins.java.api.JavaFileScannerContext;
@@ -32,67 +32,72 @@ import org.sonar.plugins.java.api.tree.MethodTree;
 import org.sonar.plugins.java.api.tree.ParameterizedTypeTree;
 import org.sonar.plugins.java.api.tree.ReturnStatementTree;
 import org.sonar.plugins.java.api.tree.Tree;
+import org.sonar.squidbridge.annotations.ActivatedByDefault;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 import javax.annotation.Nullable;
-
 import java.util.Deque;
 import java.util.List;
 import java.util.Set;
 
 @Rule(
-  key = "S1168",
-  priority = Priority.MAJOR)
-@BelongsToProfile(title = "Sonar way", priority = Priority.MAJOR)
+    key = "S1168",
+    priority = Priority.MAJOR)
+@ActivatedByDefault
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.ARCHITECTURE_RELIABILITY)
+@SqaleConstantRemediation("1h")
 public class ReturnEmptyArrayyNotNullCheck extends SubscriptionBaseVisitor {
 
   private static final Set<String> COLLECTION_TYPES = ImmutableSet.of(
-    "Collection",
-    "BeanContext",
-    "BeanContextServices",
-    "BlockingDeque",
-    "BlockingQueue",
-    "Deque",
-    "List",
-    "NavigableSet",
-    "Queue",
-    "Set",
-    "SortedSet",
-    "AbstractCollection",
-    "AbstractList",
-    "AbstractQueue",
-    "AbstractSequentialList",
-    "AbstractSet",
-    "ArrayBlockingQueue",
-    "ArrayDeque",
-    "ArrayList",
-    "AttributeList",
-    "BeanContextServicesSupport",
-    "BeanContextSupport",
-    "ConcurrentLinkedQueue",
-    "ConcurrentSkipListSet",
-    "CopyOnWriteArrayList",
-    "CopyOnWriteArraySet",
-    "DelayQueue",
-    "EnumSet",
-    "HashSet",
-    "JobStateReasons",
-    "LinkedBlockingDeque",
-    "LinkedBlockingQueue",
-    "LinkedHashSet",
-    "LinkedList",
-    "PriorityBlockingQueue",
-    "PriorityQueue",
-    "RoleList",
-    "RoleUnresolvedList",
-    "Stack",
-    "SynchronousQueue",
-    "TreeSet",
-    "Vector");
+      "Collection",
+      "BeanContext",
+      "BeanContextServices",
+      "BlockingDeque",
+      "BlockingQueue",
+      "Deque",
+      "List",
+      "NavigableSet",
+      "Queue",
+      "Set",
+      "SortedSet",
+      "AbstractCollection",
+      "AbstractList",
+      "AbstractQueue",
+      "AbstractSequentialList",
+      "AbstractSet",
+      "ArrayBlockingQueue",
+      "ArrayDeque",
+      "ArrayList",
+      "AttributeList",
+      "BeanContextServicesSupport",
+      "BeanContextSupport",
+      "ConcurrentLinkedQueue",
+      "ConcurrentSkipListSet",
+      "CopyOnWriteArrayList",
+      "CopyOnWriteArraySet",
+      "DelayQueue",
+      "EnumSet",
+      "HashSet",
+      "JobStateReasons",
+      "LinkedBlockingDeque",
+      "LinkedBlockingQueue",
+      "LinkedHashSet",
+      "LinkedList",
+      "PriorityBlockingQueue",
+      "PriorityQueue",
+      "RoleList",
+      "RoleUnresolvedList",
+      "Stack",
+      "SynchronousQueue",
+      "TreeSet",
+      "Vector");
 
   private final Deque<Returns> returnType = Lists.newLinkedList();
 
   private enum Returns {
     ARRAY, COLLECTION, OTHERS;
+
     public static Returns getReturnType(@Nullable Tree tree) {
       if (tree != null) {
         Tree returnType = tree;

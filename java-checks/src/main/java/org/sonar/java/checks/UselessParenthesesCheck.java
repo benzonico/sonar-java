@@ -19,7 +19,7 @@
  */
 package org.sonar.java.checks;
 
-import org.sonar.check.BelongsToProfile;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.plugins.java.api.JavaFileScannerContext;
@@ -27,6 +27,9 @@ import org.sonar.plugins.java.api.tree.ArrayAccessExpressionTree;
 import org.sonar.plugins.java.api.tree.ConditionalExpressionTree;
 import org.sonar.plugins.java.api.tree.Tree;
 import org.sonar.plugins.java.api.tree.Tree.Kind;
+import org.sonar.squidbridge.annotations.ActivatedByDefault;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 import java.util.Arrays;
 import java.util.Deque;
@@ -36,11 +39,13 @@ import java.util.List;
 @Rule(
     key = "UselessParenthesesCheck",
     priority = Priority.MAJOR)
-@BelongsToProfile(title = "Sonar way", priority = Priority.MAJOR)
+@ActivatedByDefault
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.READABILITY)
+@SqaleConstantRemediation("1min")
 public class UselessParenthesesCheck extends SubscriptionBaseVisitor {
 
   private final Deque<Tree> parent = new LinkedList<Tree>();
-  private static final Kind[] PARENT_EXPRESSION =  {
+  private static final Kind[] PARENT_EXPRESSION = {
       Kind.ANNOTATION,
       Kind.ARRAY_ACCESS_EXPRESSION,
       Kind.ASSERT_STATEMENT,
@@ -74,7 +79,7 @@ public class UselessParenthesesCheck extends SubscriptionBaseVisitor {
 
   @Override
   public void visitNode(Tree tree) {
-    if(tree.is(Kind.PARENTHESIZED_EXPRESSION) && hasParentExpression(tree)) {
+    if (tree.is(Kind.PARENTHESIZED_EXPRESSION) && hasParentExpression(tree)) {
       addIssue(tree, "Remove those useless parentheses.");
     }
     parent.push(tree);
@@ -83,12 +88,12 @@ public class UselessParenthesesCheck extends SubscriptionBaseVisitor {
   private boolean hasParentExpression(Tree tree) {
     Tree parentTree = this.parent.peek();
     //Exclude condition of conditional expression
-    if(parentTree.is(Kind.CONDITIONAL_EXPRESSION)) {
+    if (parentTree.is(Kind.CONDITIONAL_EXPRESSION)) {
       ConditionalExpressionTree conditionalExpressionTree = (ConditionalExpressionTree) parentTree;
       return !(tree.equals(conditionalExpressionTree.condition()) || tree.equals(conditionalExpressionTree.falseExpression()));
     }
     //Exclude expression of array access expression
-    if(parentTree.is(Kind.ARRAY_ACCESS_EXPRESSION) && tree.equals(((ArrayAccessExpressionTree) parentTree).expression()) ) {
+    if (parentTree.is(Kind.ARRAY_ACCESS_EXPRESSION) && tree.equals(((ArrayAccessExpressionTree) parentTree).expression())) {
       return false;
     }
     return parentTree.is(PARENT_EXPRESSION);

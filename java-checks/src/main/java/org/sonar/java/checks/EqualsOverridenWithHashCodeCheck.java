@@ -20,7 +20,7 @@
 package org.sonar.java.checks;
 
 import com.google.common.collect.ImmutableList;
-import org.sonar.check.BelongsToProfile;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.java.model.declaration.MethodTreeImpl;
@@ -31,14 +31,19 @@ import org.sonar.plugins.java.api.tree.IdentifierTree;
 import org.sonar.plugins.java.api.tree.MemberSelectExpressionTree;
 import org.sonar.plugins.java.api.tree.MethodTree;
 import org.sonar.plugins.java.api.tree.Tree;
+import org.sonar.squidbridge.annotations.ActivatedByDefault;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 import java.util.List;
 
 @Rule(
-  key = "S1206",
-  priority = Priority.BLOCKER,
-  tags={"bug"})
-@BelongsToProfile(title = "Sonar way", priority = Priority.BLOCKER)
+    key = "S1206",
+    priority = Priority.BLOCKER,
+    tags = {"bug"})
+@ActivatedByDefault
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.ARCHITECTURE_RELIABILITY)
+@SqaleConstantRemediation("30min")
 public class EqualsOverridenWithHashCodeCheck extends SubscriptionBaseVisitor {
 
   private static final String HASHCODE = "hashCode";
@@ -48,6 +53,7 @@ public class EqualsOverridenWithHashCodeCheck extends SubscriptionBaseVisitor {
   public List<Tree.Kind> nodesToVisit() {
     return ImmutableList.of(Tree.Kind.CLASS);
   }
+
   @Override
   public void visitNode(Tree tree) {
     ClassTree classTree = (ClassTree) tree;
@@ -87,9 +93,9 @@ public class EqualsOverridenWithHashCodeCheck extends SubscriptionBaseVisitor {
       Tree type = tree.parameters().get(0).type();
       //FIXME : should rely on type symbol when problem of expression visitor is solved.
       String name = "";
-      if(type.is(Tree.Kind.MEMBER_SELECT)){
+      if (type.is(Tree.Kind.MEMBER_SELECT)) {
         name = ((MemberSelectExpressionTree) type).identifier().name();
-      }else if(type.is(Tree.Kind.IDENTIFIER)) {
+      } else if (type.is(Tree.Kind.IDENTIFIER)) {
         name = ((IdentifierTree) type).name();
       }
       return name.endsWith("Object");

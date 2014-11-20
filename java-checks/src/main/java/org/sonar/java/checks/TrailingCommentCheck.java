@@ -22,7 +22,7 @@ package org.sonar.java.checks;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang.StringUtils;
-import org.sonar.check.BelongsToProfile;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.check.RuleProperty;
@@ -32,24 +32,29 @@ import org.sonar.plugins.java.api.JavaFileScannerContext;
 import org.sonar.plugins.java.api.tree.SyntaxToken;
 import org.sonar.plugins.java.api.tree.SyntaxTrivia;
 import org.sonar.plugins.java.api.tree.Tree;
+import org.sonar.squidbridge.annotations.ActivatedByDefault;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
 @Rule(
-  key = "TrailingCommentCheck",
-  priority = Priority.MINOR,
-  tags={"convention"})
-@BelongsToProfile(title = "Sonar way", priority = Priority.MINOR)
+    key = "TrailingCommentCheck",
+    priority = Priority.MINOR,
+    tags = {"convention"})
+@ActivatedByDefault
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.READABILITY)
+@SqaleConstantRemediation("1min")
 public class TrailingCommentCheck extends SubscriptionBaseVisitor {
 
   private static final String DEFAULT_LEGAL_COMMENT_PATTERN = "^\\s*+[^\\s]++$";
   private static final Set<String> EXCLUDED_PATTERNS = ImmutableSet.of("NOSONAR", "NOPMD", "CHECKSTYLE:");
 
   @RuleProperty(
-    key = "legalCommentPattern",
-    defaultValue = DEFAULT_LEGAL_COMMENT_PATTERN)
+      key = "legalCommentPattern",
+      defaultValue = DEFAULT_LEGAL_COMMENT_PATTERN)
   public String legalCommentPattern = DEFAULT_LEGAL_COMMENT_PATTERN;
 
   private Pattern pattern;
@@ -72,7 +77,7 @@ public class TrailingCommentCheck extends SubscriptionBaseVisitor {
     int tokenLine = ((InternalSyntaxToken) syntaxToken).getLine();
     if (tokenLine != previousTokenLine) {
       for (SyntaxTrivia trivia : syntaxToken.trivias()) {
-        if (((InternalSyntaxTrivia)trivia).getLine() == previousTokenLine) {
+        if (((InternalSyntaxTrivia) trivia).getLine() == previousTokenLine) {
           String comment = trivia.comment();
 
           comment = comment.startsWith("//") ? comment.substring(2) : comment.substring(2, comment.length() - 2);

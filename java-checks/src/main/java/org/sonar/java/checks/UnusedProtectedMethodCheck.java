@@ -19,16 +19,21 @@
  */
 package org.sonar.java.checks;
 
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.java.bytecode.asm.AsmClass;
 import org.sonar.java.bytecode.asm.AsmMethod;
 import org.sonar.java.bytecode.visitor.BytecodeVisitor;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 import org.sonar.squidbridge.api.CheckMessage;
 import org.sonar.squidbridge.api.SourceFile;
 
 @Rule(key = UnusedProtectedMethodCheck.RULE_KEY, priority = Priority.MAJOR,
-  tags={"unused"})
+    tags = {"unused"})
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.UNDERSTANDABILITY)
+@SqaleConstantRemediation("5min")
 public class UnusedProtectedMethodCheck extends BytecodeVisitor {
 
   public static final String RULE_KEY = "UnusedProtectedMethod";
@@ -42,7 +47,7 @@ public class UnusedProtectedMethodCheck extends BytecodeVisitor {
   @Override
   public void visitMethod(AsmMethod asmMethod) {
     if (!asmMethod.isUsed() && asmMethod.isProtected() && !asmClass.isAbstract() && !SerializableContract.methodMatch(asmMethod)
-      && !asmMethod.isInherited()) {
+        && !asmMethod.isInherited()) {
       CheckMessage message = new CheckMessage(this, "Protected method '" + asmMethod.getName() + "(...)' is never used.");
       int line = getMethodLineNumber(asmMethod);
       if (line > 0) {

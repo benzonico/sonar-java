@@ -20,21 +20,26 @@
 package org.sonar.java.checks;
 
 import com.google.common.collect.ImmutableList;
-import org.sonar.check.BelongsToProfile;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.plugins.java.api.tree.LiteralTree;
 import org.sonar.plugins.java.api.tree.Tree;
 import org.sonar.plugins.java.api.tree.Tree.Kind;
+import org.sonar.squidbridge.annotations.ActivatedByDefault;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 import java.util.List;
 
 @Rule(
-  key = "LowerCaseLongSuffixCheck",
-  priority = Priority.MAJOR,
-  tags = {"convention"})
-@BelongsToProfile(title = "Sonar way", priority = Priority.MAJOR)
-public class LowerCaseLongSuffixCheck extends SubscriptionBaseVisitor{
+    key = "LowerCaseLongSuffixCheck",
+    priority = Priority.MAJOR,
+    tags = {"convention"})
+@ActivatedByDefault
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.READABILITY)
+@SqaleConstantRemediation("10min")
+public class LowerCaseLongSuffixCheck extends SubscriptionBaseVisitor {
 
   @Override
   public List<Kind> nodesToVisit() {
@@ -44,7 +49,7 @@ public class LowerCaseLongSuffixCheck extends SubscriptionBaseVisitor{
   @Override
   public void visitNode(Tree tree) {
     LiteralTree literalTree = (LiteralTree) tree;
-    if(literalTree.value().endsWith("l")){
+    if (literalTree.value().endsWith("l")) {
       addIssue(tree, "Replace this lower case \"l\" long suffix by an upper case \"L\".");
     }
   }

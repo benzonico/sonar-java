@@ -30,14 +30,16 @@ import org.sonar.java.bytecode.asm.AsmClass;
 import org.sonar.java.bytecode.asm.AsmEdge;
 import org.sonar.java.bytecode.asm.AsmMethod;
 import org.sonar.java.bytecode.visitor.BytecodeVisitor;
+import org.sonar.squidbridge.annotations.NoSqale;
 import org.sonar.squidbridge.api.CheckMessage;
 import org.sonar.squidbridge.api.SourceFile;
 
 import java.util.Map;
 
-@Rule(key = ArchitectureCheck.RULE_KEY, 
-  cardinality = Cardinality.MULTIPLE, 
-  priority = Priority.MAJOR)
+@Rule(key = ArchitectureCheck.RULE_KEY,
+    cardinality = Cardinality.MULTIPLE,
+    priority = Priority.MAJOR)
+@NoSqale
 public class ArchitectureCheck extends BytecodeVisitor {
 
   public static final String RULE_KEY = "ArchitecturalConstraint";

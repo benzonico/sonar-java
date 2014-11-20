@@ -20,7 +20,7 @@
 package org.sonar.java.checks;
 
 import org.sonar.api.rule.RuleKey;
-import org.sonar.check.BelongsToProfile;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.plugins.java.api.JavaFileScanner;
@@ -29,11 +29,16 @@ import org.sonar.plugins.java.api.tree.BaseTreeVisitor;
 import org.sonar.plugins.java.api.tree.MethodTree;
 import org.sonar.plugins.java.api.tree.ThrowStatementTree;
 import org.sonar.plugins.java.api.tree.TryStatementTree;
+import org.sonar.squidbridge.annotations.ActivatedByDefault;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 @Rule(
     key = ThrowsFromFinallyCheck.RULE,
     priority = Priority.MAJOR)
-@BelongsToProfile(title = "Sonar way", priority = Priority.MAJOR)
+@ActivatedByDefault
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.EXCEPTION_HANDLING)
+@SqaleConstantRemediation("20min")
 public class ThrowsFromFinallyCheck extends BaseTreeVisitor implements JavaFileScanner {
 
   public static final String RULE = "S1163";
@@ -61,7 +66,7 @@ public class ThrowsFromFinallyCheck extends BaseTreeVisitor implements JavaFileS
 
   @Override
   public void visitThrowStatement(ThrowStatementTree tree) {
-    if(isInFinally() && !isInMethodWithinFinally){
+    if (isInFinally() && !isInMethodWithinFinally) {
       context.addIssue(tree, RULEKEY, "Refactor this code to not throw exceptions in finally blocks.");
     }
     super.visitThrowStatement(tree);
@@ -74,8 +79,8 @@ public class ThrowsFromFinallyCheck extends BaseTreeVisitor implements JavaFileS
     isInMethodWithinFinally = false;
   }
 
-  private boolean isInFinally(){
-    return finallyLevel>0;
+  private boolean isInFinally() {
+    return finallyLevel > 0;
   }
 
 }

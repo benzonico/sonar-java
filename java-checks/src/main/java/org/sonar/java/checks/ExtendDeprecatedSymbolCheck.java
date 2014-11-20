@@ -20,12 +20,15 @@
 package org.sonar.java.checks;
 
 import com.google.common.collect.ImmutableList;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.java.model.AbstractTypedTree;
 import org.sonar.java.resolve.Type;
 import org.sonar.plugins.java.api.tree.ClassTree;
 import org.sonar.plugins.java.api.tree.Tree;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -33,6 +36,8 @@ import java.util.List;
 @Rule(key = "S1724",
     priority = Priority.MAJOR,
     tags = {"cwe", "obsolete"})
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.ARCHITECTURE_RELIABILITY)
+@SqaleConstantRemediation("30min")
 public class ExtendDeprecatedSymbolCheck extends AbstractDeprecatedChecker {
 
   @Override
@@ -55,7 +60,7 @@ public class ExtendDeprecatedSymbolCheck extends AbstractDeprecatedChecker {
     if (superTypeTree != null) {
       Type symbolType = ((AbstractTypedTree) superTypeTree).getSymbolType();
       if (symbolType.isTagged(Type.CLASS) && ((Type.ClassType) symbolType).getSymbol().isDeprecated()) {
-        addIssue(superTypeTree, "\""+((Type.ClassType) symbolType).getSymbol().getName()+"\""+" is deprecated, "
+        addIssue(superTypeTree, "\"" + ((Type.ClassType) symbolType).getSymbol().getName() + "\"" + " is deprecated, "
             + (isInterface ? "implement" : "extend") + " the suggested replacement instead.");
       }
     }

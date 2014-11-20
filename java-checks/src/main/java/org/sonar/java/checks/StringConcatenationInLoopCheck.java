@@ -20,6 +20,7 @@
 package org.sonar.java.checks;
 
 import org.sonar.api.rule.RuleKey;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.java.model.SyntacticEquivalence;
@@ -43,6 +44,8 @@ import org.sonar.plugins.java.api.tree.MethodInvocationTree;
 import org.sonar.plugins.java.api.tree.ParenthesizedTree;
 import org.sonar.plugins.java.api.tree.Tree;
 import org.sonar.plugins.java.api.tree.WhileStatementTree;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 import java.util.Deque;
 import java.util.LinkedList;
@@ -51,6 +54,8 @@ import java.util.LinkedList;
     key = StringConcatenationInLoopCheck.RULE_KEY,
     priority = Priority.MAJOR,
     tags = {"performance"})
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.MEMORY_EFFICIENCY)
+@SqaleConstantRemediation("10min")
 public class StringConcatenationInLoopCheck extends BaseTreeVisitor implements JavaFileScanner {
 
   public static final String RULE_KEY = "S1643";
@@ -81,7 +86,7 @@ public class StringConcatenationInLoopCheck extends BaseTreeVisitor implements J
     IdentifierTree idTree = getIdentifierTree(tree.variable());
     Tree envTree = semanticModel.getTree(semanticModel.getEnv(semanticModel.getReference(idTree)));
     Tree loopTree = loopLevel.peek();
-    if(envTree!= null && (envTree.equals(loopTree) || envTree.equals(loopStatement(loopTree)))) {
+    if (envTree != null && (envTree.equals(loopTree) || envTree.equals(loopStatement(loopTree)))) {
       return false;
     }
     return true;
@@ -89,26 +94,26 @@ public class StringConcatenationInLoopCheck extends BaseTreeVisitor implements J
 
   private IdentifierTree getIdentifierTree(ExpressionTree tree) {
     IdentifierTree idTree;
-    if(tree.is(Tree.Kind.MEMBER_SELECT)) {
+    if (tree.is(Tree.Kind.MEMBER_SELECT)) {
       idTree = getIdentifierTree(((MemberSelectExpressionTree) tree).expression());
-    } else if(tree.is(Tree.Kind.ARRAY_ACCESS_EXPRESSION)){
-      idTree = getIdentifierTree(((ArrayAccessExpressionTree)tree).expression());
-    } else if(tree.is(Tree.Kind.METHOD_INVOCATION)){
+    } else if (tree.is(Tree.Kind.ARRAY_ACCESS_EXPRESSION)) {
+      idTree = getIdentifierTree(((ArrayAccessExpressionTree) tree).expression());
+    } else if (tree.is(Tree.Kind.METHOD_INVOCATION)) {
       idTree = getIdentifierTree(((MethodInvocationTree) tree).methodSelect());
     } else {
-      idTree = (IdentifierTree)tree;
+      idTree = (IdentifierTree) tree;
     }
     return idTree;
   }
 
   private Tree loopStatement(Tree loopTree) {
-    if(loopTree.is(Tree.Kind.FOR_STATEMENT)) {
+    if (loopTree.is(Tree.Kind.FOR_STATEMENT)) {
       return ((ForStatementTree) loopTree).statement();
-    } else if(loopTree.is(Tree.Kind.DO_STATEMENT)) {
+    } else if (loopTree.is(Tree.Kind.DO_STATEMENT)) {
       return ((DoWhileStatementTree) loopTree).statement();
-    } else if(loopTree.is(Tree.Kind.WHILE_STATEMENT)) {
+    } else if (loopTree.is(Tree.Kind.WHILE_STATEMENT)) {
       return ((WhileStatementTree) loopTree).statement();
-    } else if(loopTree.is(Tree.Kind.FOR_EACH_STATEMENT)) {
+    } else if (loopTree.is(Tree.Kind.FOR_EACH_STATEMENT)) {
       return ((ForEachStatement) loopTree).statement();
     }
     return null;
@@ -120,7 +125,7 @@ public class StringConcatenationInLoopCheck extends BaseTreeVisitor implements J
 
   private boolean isConcatenation(AssignmentExpressionTree tree) {
     return tree.is(Tree.Kind.PLUS_ASSIGNMENT) || (tree.is(Tree.Kind.ASSIGNMENT) && removeParenthesis(tree.expression()).is(Tree.Kind.PLUS)
-      && concatenateVariable(tree.variable(), (BinaryExpressionTree) removeParenthesis(tree.expression()))
+        && concatenateVariable(tree.variable(), (BinaryExpressionTree) removeParenthesis(tree.expression()))
     );
   }
 
@@ -129,7 +134,7 @@ public class StringConcatenationInLoopCheck extends BaseTreeVisitor implements J
   }
 
   private boolean concatenateVariable(ExpressionTree variable, ExpressionTree operand) {
-    if(operand.is(Tree.Kind.PLUS)) {
+    if (operand.is(Tree.Kind.PLUS)) {
       return concatenateVariable(variable, (BinaryExpressionTree) operand);
     }
     return SyntacticEquivalence.areEquivalent(variable, operand);
@@ -137,7 +142,7 @@ public class StringConcatenationInLoopCheck extends BaseTreeVisitor implements J
 
   private Tree removeParenthesis(Tree tree) {
     Tree result = tree;
-    while(result.is(Tree.Kind.PARENTHESIZED_EXPRESSION)) {
+    while (result.is(Tree.Kind.PARENTHESIZED_EXPRESSION)) {
       result = ((ParenthesizedTree) result).expression();
     }
     return result;

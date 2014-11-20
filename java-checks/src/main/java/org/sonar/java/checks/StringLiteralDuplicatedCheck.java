@@ -23,7 +23,7 @@ import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
 import org.sonar.api.rule.RuleKey;
-import org.sonar.check.BelongsToProfile;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.check.RuleProperty;
@@ -33,13 +33,18 @@ import org.sonar.plugins.java.api.tree.AnnotationTree;
 import org.sonar.plugins.java.api.tree.BaseTreeVisitor;
 import org.sonar.plugins.java.api.tree.LiteralTree;
 import org.sonar.plugins.java.api.tree.Tree;
+import org.sonar.squidbridge.annotations.ActivatedByDefault;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 import java.util.Map;
 
 @Rule(
-  key = StringLiteralDuplicatedCheck.RULE_KEY,
-  priority = Priority.MINOR)
-@BelongsToProfile(title = "Sonar way", priority = Priority.MINOR)
+    key = StringLiteralDuplicatedCheck.RULE_KEY,
+    priority = Priority.MINOR)
+@ActivatedByDefault
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.DATA_RELIABILITY)
+@SqaleConstantRemediation("10min")
 public class StringLiteralDuplicatedCheck extends BaseTreeVisitor implements JavaFileScanner {
 
   public static final String RULE_KEY = "S1192";
@@ -70,8 +75,8 @@ public class StringLiteralDuplicatedCheck extends BaseTreeVisitor implements Jav
 
   @Override
   public void visitLiteral(LiteralTree tree) {
-    if(tree.is(Tree.Kind.STRING_LITERAL))  {
-      String literal =tree.value();
+    if (tree.is(Tree.Kind.STRING_LITERAL)) {
+      String literal = tree.value();
       if (literal.length() >= MINIMAL_LITERAL_LENGTH) {
         if (!firstOccurrence.containsKey(literal)) {
           firstOccurrence.put(literal, tree);

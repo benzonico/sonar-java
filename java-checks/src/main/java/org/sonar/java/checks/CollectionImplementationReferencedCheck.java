@@ -21,7 +21,7 @@ package org.sonar.java.checks;
 
 import com.google.common.collect.ImmutableMap;
 import org.sonar.api.rule.RuleKey;
-import org.sonar.check.BelongsToProfile;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.plugins.java.api.JavaFileScanner;
@@ -32,13 +32,18 @@ import org.sonar.plugins.java.api.tree.MethodTree;
 import org.sonar.plugins.java.api.tree.ParameterizedTypeTree;
 import org.sonar.plugins.java.api.tree.Tree;
 import org.sonar.plugins.java.api.tree.VariableTree;
+import org.sonar.squidbridge.annotations.ActivatedByDefault;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 import java.util.Map;
 
 @Rule(
-  key = CollectionImplementationReferencedCheck.KEY,
-  priority = Priority.MAJOR)
-@BelongsToProfile(title = "Sonar way", priority = Priority.MAJOR)
+    key = CollectionImplementationReferencedCheck.KEY,
+    priority = Priority.MAJOR)
+@ActivatedByDefault
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.ARCHITECTURE_CHANGEABILITY)
+@SqaleConstantRemediation("10min")
 public class CollectionImplementationReferencedCheck extends BaseTreeVisitor implements JavaFileScanner {
 
   public static final String KEY = "S1319";
@@ -53,41 +58,41 @@ public class CollectionImplementationReferencedCheck extends BaseTreeVisitor imp
   private static final String SORTED_MAP = "SortedMap";
   private static final String SORTED_SET = "SortedSet";
 
-  private static final Map<String, String> MAPPING = ImmutableMap.<String, String> builder()
-    .put("ArrayDeque", DEQUE)
-    .put("ConcurrentLinkedDeque", DEQUE)
+  private static final Map<String, String> MAPPING = ImmutableMap.<String, String>builder()
+      .put("ArrayDeque", DEQUE)
+      .put("ConcurrentLinkedDeque", DEQUE)
 
-    .put("AbstractList", LIST)
-    .put("AbstractSequentialList", LIST)
-    .put("ArrayList", LIST)
-    .put("CopyOnWriteArrayList", LIST)
-    .put("LinkedList", LIST)
+      .put("AbstractList", LIST)
+      .put("AbstractSequentialList", LIST)
+      .put("ArrayList", LIST)
+      .put("CopyOnWriteArrayList", LIST)
+      .put("LinkedList", LIST)
 
-    .put("AbstractMap", MAP)
-    .put("EnumMap", MAP)
-    .put("HashMap", MAP)
-    .put("Hashtable", MAP)
-    .put("IdentityHashMap", MAP)
-    .put("LinkedHashMap", MAP)
-    .put("WeakHashMap", MAP)
+      .put("AbstractMap", MAP)
+      .put("EnumMap", MAP)
+      .put("HashMap", MAP)
+      .put("Hashtable", MAP)
+      .put("IdentityHashMap", MAP)
+      .put("LinkedHashMap", MAP)
+      .put("WeakHashMap", MAP)
 
-    .put("ConcurrentHashMap", CONCURRENT_MAP)
-    .put("ConcurrentSkipListMap", CONCURRENT_MAP)
+      .put("ConcurrentHashMap", CONCURRENT_MAP)
+      .put("ConcurrentSkipListMap", CONCURRENT_MAP)
 
-    .put("AbstractQueue", QUEUE)
-    .put("ConcurrentLinkedQueue", QUEUE)
-    .put("SynchronousQueue", QUEUE)
+      .put("AbstractQueue", QUEUE)
+      .put("ConcurrentLinkedQueue", QUEUE)
+      .put("SynchronousQueue", QUEUE)
 
-    .put("AbstractSet", SET)
-    .put("CopyOnWriteArraySet", SET)
-    .put("EnumSet", SET)
-    .put("HashSet", SET)
-    .put("LinkedHashSet", SET)
+      .put("AbstractSet", SET)
+      .put("CopyOnWriteArraySet", SET)
+      .put("EnumSet", SET)
+      .put("HashSet", SET)
+      .put("LinkedHashSet", SET)
 
-    .put("TreeMap", SORTED_MAP)
+      .put("TreeMap", SORTED_MAP)
 
-    .put("TreeSet", SORTED_SET)
-    .build();
+      .put("TreeSet", SORTED_SET)
+      .build();
 
   private JavaFileScannerContext context;
 
@@ -106,9 +111,9 @@ public class CollectionImplementationReferencedCheck extends BaseTreeVisitor imp
 
     if (collectionInterface != null) {
       context.addIssue(
-        tree.type(),
-        RULE_KEY,
-        "The type of the \"" + tree.simpleName() + "\" object " + messageRemainder(collectionImplementation, collectionInterface));
+          tree.type(),
+          RULE_KEY,
+          "The type of the \"" + tree.simpleName() + "\" object " + messageRemainder(collectionImplementation, collectionInterface));
     }
   }
 
@@ -121,9 +126,9 @@ public class CollectionImplementationReferencedCheck extends BaseTreeVisitor imp
 
     if (collectionInterface != null) {
       context.addIssue(
-        tree.returnType(),
-        RULE_KEY,
-        "The return type of this method " + messageRemainder(collectionImplementation, collectionInterface));
+          tree.returnType(),
+          RULE_KEY,
+          "The return type of this method " + messageRemainder(collectionImplementation, collectionInterface));
     }
   }
 

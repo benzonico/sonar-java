@@ -23,6 +23,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.sonar.api.rule.RuleKey;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.api.utils.WildcardPattern;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
@@ -43,6 +44,8 @@ import org.sonar.plugins.java.api.tree.Tree;
 import org.sonar.plugins.java.api.tree.Tree.Kind;
 import org.sonar.plugins.java.api.tree.TypeParameterTree;
 import org.sonar.plugins.java.api.tree.VariableTree;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 import java.util.Deque;
 import java.util.LinkedList;
@@ -50,7 +53,9 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 @Rule(key = UndocumentedApiCheck.RULE_KEY, priority = Priority.MAJOR,
-  tags = {"convention"})
+    tags = {"convention"})
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.UNDERSTANDABILITY)
+@SqaleConstantRemediation("30min")
 public class UndocumentedApiCheck extends BaseTreeVisitor implements JavaFileScanner {
 
   private static final Kind[] CLASS_KINDS = PublicApiChecker.classKinds();
@@ -60,8 +65,8 @@ public class UndocumentedApiCheck extends BaseTreeVisitor implements JavaFileSca
   public static final String RULE_KEY = "UndocumentedApi";
 
   @RuleProperty(
-    key = "forClasses",
-    defaultValue = DEFAULT_FOR_CLASSES)
+      key = "forClasses",
+      defaultValue = DEFAULT_FOR_CLASSES)
   public String forClasses = DEFAULT_FOR_CLASSES;
 
   private WildcardPattern[] patterns;
@@ -166,7 +171,7 @@ public class UndocumentedApiCheck extends BaseTreeVisitor implements JavaFileSca
       MethodTree methodTree = (MethodTree) tree;
       String name = methodTree.simpleName().name();
       return setterPattern.matcher(name).matches() && methodTree.parameters().size() == 1 ||
-        getterPattern.matcher(name).matches() && methodTree.parameters().isEmpty();
+          getterPattern.matcher(name).matches() && methodTree.parameters().isEmpty();
     }
     return false;
   }

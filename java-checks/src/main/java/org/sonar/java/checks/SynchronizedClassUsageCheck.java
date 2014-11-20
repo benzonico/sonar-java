@@ -22,7 +22,7 @@ package org.sonar.java.checks;
 import com.google.common.collect.ImmutableMap;
 import com.sonar.sslr.api.AstNode;
 import org.sonar.api.rule.RuleKey;
-import org.sonar.check.BelongsToProfile;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.java.model.JavaTree;
@@ -39,24 +39,29 @@ import org.sonar.plugins.java.api.tree.NewClassTree;
 import org.sonar.plugins.java.api.tree.ParameterizedTypeTree;
 import org.sonar.plugins.java.api.tree.Tree;
 import org.sonar.plugins.java.api.tree.VariableTree;
+import org.sonar.squidbridge.annotations.ActivatedByDefault;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 import java.util.Map;
 
 @Rule(
-  key = SynchronizedClassUsageCheck.RULE_KEY,
-  priority = Priority.MAJOR)
-@BelongsToProfile(title = "Sonar way", priority = Priority.MAJOR)
+    key = SynchronizedClassUsageCheck.RULE_KEY,
+    priority = Priority.MAJOR)
+@ActivatedByDefault
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.CPU_EFFICIENCY)
+@SqaleConstantRemediation("20min")
 public class SynchronizedClassUsageCheck extends BaseTreeVisitor implements JavaFileScanner {
 
   private JavaFileScannerContext context;
   public static final String RULE_KEY = "S1149";
   private static final RuleKey RULE_KEY_FOR_REPOSITORY = RuleKey.of(CheckList.REPOSITORY_KEY, RULE_KEY);
   private static final Map<String, String> REPLACEMENTS = ImmutableMap.<String, String>builder()
-    .put("Vector", "\"ArrayList\" or \"LinkedList\"")
-    .put("Hashtable", "\"HashMap\"")
-    .put("StringBuffer", "\"StringBuilder\"")
-    .put("Stack", "\"Deque\"")
-    .build();
+      .put("Vector", "\"ArrayList\" or \"LinkedList\"")
+      .put("Hashtable", "\"HashMap\"")
+      .put("StringBuffer", "\"StringBuilder\"")
+      .put("Stack", "\"Deque\"")
+      .build();
 
   @Override
   public void scanFile(JavaFileScannerContext context) {

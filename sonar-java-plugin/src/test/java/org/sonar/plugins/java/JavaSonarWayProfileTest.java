@@ -40,7 +40,7 @@ public class JavaSonarWayProfileTest {
   public void should_create_sonar_way_profile() {
     ValidationMessages validation = ValidationMessages.create();
 
-    JavaSonarWayProfile definition = new JavaSonarWayProfile(new AnnotationProfileParser(ruleFinder()));
+    JavaSonarWayProfile definition = new JavaSonarWayProfile(ruleFinder());
     RulesProfile profile = definition.createProfile(validation);
 
     assertThat(profile.getLanguage()).isEqualTo(Java.KEY);

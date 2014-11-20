@@ -24,11 +24,14 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multiset;
 import com.sonar.sslr.api.AstNode;
 import com.sonar.sslr.api.AstNodeType;
-import org.sonar.check.BelongsToProfile;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.java.ast.parser.JavaLexer;
 import org.sonar.plugins.java.api.tree.Tree.Kind;
+import org.sonar.squidbridge.annotations.ActivatedByDefault;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 import org.sonar.squidbridge.checks.SquidCheck;
 import org.sonar.sslr.parser.LexerlessGrammar;
 
@@ -36,32 +39,34 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Rule(
-  key = "S00122",
-  priority = Priority.MAJOR,
-  tags = {"convention"})
-@BelongsToProfile(title = "Sonar way", priority = Priority.MAJOR)
+    key = "S00122",
+    priority = Priority.MAJOR,
+    tags = {"convention"})
+@ActivatedByDefault
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.READABILITY)
+@SqaleConstantRemediation("1min")
 public class TooManyStatementsPerLine_S00122_Check extends SquidCheck<LexerlessGrammar> {
 
   private static final AstNodeType[] STATEMENTS_KINDS = new ImmutableList.Builder<AstNodeType>()
-    .add(
-      Kind.EMPTY_STATEMENT,
-      Kind.LABELED_STATEMENT,
-      Kind.IF_STATEMENT,
-      Kind.ASSERT_STATEMENT,
-      Kind.SWITCH_STATEMENT,
-      Kind.WHILE_STATEMENT,
-      Kind.DO_STATEMENT,
-      Kind.BREAK_STATEMENT,
-      Kind.CONTINUE_STATEMENT,
-      Kind.RETURN_STATEMENT,
-      Kind.THROW_STATEMENT,
-      Kind.SYNCHRONIZED_STATEMENT,
-      Kind.EXPRESSION_STATEMENT,
-      Kind.FOR_STATEMENT,
-      Kind.FOR_EACH_STATEMENT,
-      Kind.TRY_STATEMENT)
-    .build()
-    .toArray(new AstNodeType[0]);
+      .add(
+          Kind.EMPTY_STATEMENT,
+          Kind.LABELED_STATEMENT,
+          Kind.IF_STATEMENT,
+          Kind.ASSERT_STATEMENT,
+          Kind.SWITCH_STATEMENT,
+          Kind.WHILE_STATEMENT,
+          Kind.DO_STATEMENT,
+          Kind.BREAK_STATEMENT,
+          Kind.CONTINUE_STATEMENT,
+          Kind.RETURN_STATEMENT,
+          Kind.THROW_STATEMENT,
+          Kind.SYNCHRONIZED_STATEMENT,
+          Kind.EXPRESSION_STATEMENT,
+          Kind.FOR_STATEMENT,
+          Kind.FOR_EACH_STATEMENT,
+          Kind.TRY_STATEMENT)
+      .build()
+      .toArray(new AstNodeType[0]);
 
   private final Multiset<Integer> statementsPerLine = HashMultiset.create();
   private final Map<Integer, Integer> columnsByLine = new HashMap<Integer, Integer>();
@@ -74,9 +79,9 @@ public class TooManyStatementsPerLine_S00122_Check extends SquidCheck<LexerlessG
 
   public boolean isExcluded(AstNode astNode) {
     return astNode.is(Kind.BLOCK)
-      || astNode.is(Kind.EMPTY_STATEMENT)
-      || astNode.is(Kind.LABELED_STATEMENT)
-      || astNode.getParent().is(JavaLexer.STATEMENT_EXPRESSION);
+        || astNode.is(Kind.EMPTY_STATEMENT)
+        || astNode.is(Kind.LABELED_STATEMENT)
+        || astNode.getParent().is(JavaLexer.STATEMENT_EXPRESSION);
   }
 
   @Override
@@ -122,7 +127,7 @@ public class TooManyStatementsPerLine_S00122_Check extends SquidCheck<LexerlessG
     for (Multiset.Entry<Integer> statementsAtLine : statementsPerLine.entrySet()) {
       if (statementsAtLine.getCount() > 1) {
         getContext().createLineViolation(this, "At most one statement is allowed per line, but {0} statements were found on this line.", statementsAtLine.getElement(),
-          statementsAtLine.getCount());
+            statementsAtLine.getCount());
       }
     }
   }

@@ -20,20 +20,25 @@
 package org.sonar.java.checks;
 
 import com.sonar.sslr.api.AstNode;
-import org.sonar.check.BelongsToProfile;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.java.ast.api.JavaPunctuator;
 import org.sonar.java.ast.parser.JavaLexer;
 import org.sonar.plugins.java.api.tree.Tree.Kind;
+import org.sonar.squidbridge.annotations.ActivatedByDefault;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 import org.sonar.squidbridge.checks.SquidCheck;
 import org.sonar.sslr.parser.LexerlessGrammar;
 
 @Rule(
-  key = "LeftCurlyBraceEndLineCheck",
-  priority = Priority.MAJOR,
-  tags = {"convention"})
-@BelongsToProfile(title = "Sonar way", priority = Priority.MAJOR)
+    key = "LeftCurlyBraceEndLineCheck",
+    priority = Priority.MAJOR,
+    tags = {"convention"})
+@ActivatedByDefault
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.READABILITY)
+@SqaleConstantRemediation("1min")
 public class LeftCurlyBraceEndLineCheck extends SquidCheck<LexerlessGrammar> {
 
   @Override
@@ -50,7 +55,7 @@ public class LeftCurlyBraceEndLineCheck extends SquidCheck<LexerlessGrammar> {
 
   private static boolean isExcluded(AstNode node) {
     return node.getParent().is(Kind.NEW_ARRAY) ||
-      isExcludedBlock(node.getParent());
+        isExcludedBlock(node.getParent());
   }
 
   private static boolean isExcludedBlock(AstNode node) {

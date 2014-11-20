@@ -20,12 +20,15 @@
 package org.sonar.java.checks;
 
 import com.google.common.collect.ImmutableList;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.plugins.java.api.tree.ClassTree;
 import org.sonar.plugins.java.api.tree.Modifier;
 import org.sonar.plugins.java.api.tree.Tree;
 import org.sonar.plugins.java.api.tree.VariableTree;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 import java.util.List;
 
@@ -33,6 +36,8 @@ import java.util.List;
     key = "S2039",
     priority = Priority.MAJOR,
     tags = {"security"})
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.INSTRUCTION_RELIABILITY)
+@SqaleConstantRemediation("5min")
 public class FieldModifierCheck extends SubscriptionBaseVisitor {
 
   @Override
@@ -44,8 +49,8 @@ public class FieldModifierCheck extends SubscriptionBaseVisitor {
   public void visitNode(Tree tree) {
     ClassTree classTree = (ClassTree) tree;
     for (Tree member : classTree.members()) {
-      if(member.is(Tree.Kind.VARIABLE) && hasNoVisibilityModifier((VariableTree) member)) {
-        addIssue(member, "Explicitly declare the visibility for \""+((VariableTree) member).simpleName().name()+"\".");
+      if (member.is(Tree.Kind.VARIABLE) && hasNoVisibilityModifier((VariableTree) member)) {
+        addIssue(member, "Explicitly declare the visibility for \"" + ((VariableTree) member).simpleName().name() + "\".");
       }
     }
   }

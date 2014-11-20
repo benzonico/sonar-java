@@ -20,7 +20,7 @@
 package org.sonar.java.checks;
 
 import com.google.common.collect.ImmutableList;
-import org.sonar.check.BelongsToProfile;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.plugins.java.api.tree.BinaryExpressionTree;
@@ -28,13 +28,18 @@ import org.sonar.plugins.java.api.tree.LiteralTree;
 import org.sonar.plugins.java.api.tree.Tree;
 import org.sonar.plugins.java.api.tree.Tree.Kind;
 import org.sonar.plugins.java.api.tree.UnaryExpressionTree;
+import org.sonar.squidbridge.annotations.ActivatedByDefault;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 import java.util.List;
 
 @Rule(
-  key = "S1125",
-  priority = Priority.MINOR)
-@BelongsToProfile(title = "Sonar way", priority = Priority.MINOR)
+    key = "S1125",
+    priority = Priority.MINOR)
+@ActivatedByDefault
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.UNDERSTANDABILITY)
+@SqaleConstantRemediation("10min")
 public class BooleanLiteralCheck extends SubscriptionBaseVisitor {
 
   @Override
@@ -45,12 +50,12 @@ public class BooleanLiteralCheck extends SubscriptionBaseVisitor {
   @Override
   public void visitNode(Tree tree) {
     String literal;
-    if(tree.is(Kind.LOGICAL_COMPLEMENT)) {
-      literal = getBooleanLiteral(((UnaryExpressionTree)tree).expression());
+    if (tree.is(Kind.LOGICAL_COMPLEMENT)) {
+      literal = getBooleanLiteral(((UnaryExpressionTree) tree).expression());
     } else {
-      literal = getBooleanLiteralOperands((BinaryExpressionTree)tree);
+      literal = getBooleanLiteralOperands((BinaryExpressionTree) tree);
     }
-    if(literal != null) {
+    if (literal != null) {
       addIssue(tree, "Remove the literal \"" + literal + "\" boolean value.");
     }
   }

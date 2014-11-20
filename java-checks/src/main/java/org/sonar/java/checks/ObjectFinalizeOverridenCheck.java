@@ -20,19 +20,24 @@
 package org.sonar.java.checks;
 
 import com.google.common.collect.ImmutableList;
-import org.sonar.check.BelongsToProfile;
+import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.plugins.java.api.tree.MethodTree;
 import org.sonar.plugins.java.api.tree.PrimitiveTypeTree;
 import org.sonar.plugins.java.api.tree.Tree;
+import org.sonar.squidbridge.annotations.ActivatedByDefault;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
+import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 import java.util.List;
 
 @Rule(
-  key = "ObjectFinalizeOverridenCheck",
-  priority = Priority.CRITICAL)
-@BelongsToProfile(title = "Sonar way", priority = Priority.CRITICAL)
+    key = "ObjectFinalizeOverridenCheck",
+    priority = Priority.CRITICAL)
+@ActivatedByDefault
+@SqaleSubCharacteristic(RulesDefinition.SubCharacteristics.ARCHITECTURE_RELIABILITY)
+@SqaleConstantRemediation("20min")
 public class ObjectFinalizeOverridenCheck extends SubscriptionBaseVisitor {
 
   @Override
@@ -49,9 +54,9 @@ public class ObjectFinalizeOverridenCheck extends SubscriptionBaseVisitor {
   }
 
   private boolean isFinalize(MethodTree methodTree) {
-    if("finalize".equals(methodTree.simpleName().name()) ) {
+    if ("finalize".equals(methodTree.simpleName().name())) {
       Tree returnType = methodTree.returnType();
-      if(returnType != null && returnType.is(Tree.Kind.PRIMITIVE_TYPE)) {
+      if (returnType != null && returnType.is(Tree.Kind.PRIMITIVE_TYPE)) {
         return "void".equals(((PrimitiveTypeTree) returnType).keyword().text());
       }
     }
