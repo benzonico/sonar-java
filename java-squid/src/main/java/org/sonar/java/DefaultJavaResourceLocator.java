@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.resources.Project;
 import org.sonar.api.resources.Resource;
 import org.sonar.java.bytecode.visitor.ResourceMapping;
@@ -125,6 +126,7 @@ public class DefaultJavaResourceLocator implements JavaResourceLocator, JavaFile
       }
     }
     context.addNoSonarLines(javaFilesCache.ignoredLines());
+    context.ignoredLinesByRule(javaFilesCache.ignoredLinesForRules());
     methodStartLines.putAll(javaFilesCache.getMethodStartLines());
   }
 

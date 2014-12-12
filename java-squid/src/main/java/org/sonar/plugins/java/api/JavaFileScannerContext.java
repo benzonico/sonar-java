@@ -20,6 +20,7 @@
 package org.sonar.plugins.java.api;
 
 import com.google.common.annotations.Beta;
+import com.google.common.collect.Multimap;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.plugins.java.api.tree.ClassTree;
 import org.sonar.plugins.java.api.tree.CompilationUnitTree;
@@ -57,4 +58,5 @@ public interface JavaFileScannerContext {
 
   void addNoSonarLines(Set<Integer> lines);
 
+  void ignoredLinesByRule(Multimap<String, Integer> stringIntegerMultimap);
 }

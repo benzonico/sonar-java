@@ -21,8 +21,10 @@ package org.sonar.java.model;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
 import com.sonar.sslr.api.AstNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -155,6 +157,7 @@ public class VisitorsBridge extends SquidAstVisitor<LexerlessGrammar> implements
     private final SemanticModel semanticModel;
     private final ComplexityVisitor complexityVisitor;
     private final File file;
+    private Multimap<String, Integer> ignoredLinesByRule;
 
     public DefaultJavaFileScannerContext(CompilationUnitTree tree, SourceFile sourceFile, File file, SemanticModel semanticModel, boolean analyseAccessors) {
       this.tree = tree;
@@ -162,6 +165,7 @@ public class VisitorsBridge extends SquidAstVisitor<LexerlessGrammar> implements
       this.file = file;
       this.semanticModel = semanticModel;
       this.complexityVisitor = new ComplexityVisitor(analyseAccessors);
+      this.ignoredLinesByRule = HashMultimap.create();
     }
 
     @Override
@@ -183,12 +187,14 @@ public class VisitorsBridge extends SquidAstVisitor<LexerlessGrammar> implements
     public void addIssue(int line, RuleKey ruleKey, String message) {
       Preconditions.checkNotNull(ruleKey);
       Preconditions.checkNotNull(message);
-      CheckMessage checkMessage = new CheckMessage(ruleKey, message);
-      if (line > 0) {
-        checkMessage.setLine(line);
+      if(!ignoredLinesByRule.get(ruleKey.toString()).contains(line)) {
+        CheckMessage checkMessage = new CheckMessage(ruleKey, message);
+        if (line > 0) {
+          checkMessage.setLine(line);
+        }
+        checkMessage.setBypassExclusion("NoSonar".equals(ruleKey.rule()));
+        sourceFile.log(checkMessage);
       }
-      checkMessage.setBypassExclusion("NoSonar".equals(ruleKey.rule()));
-      sourceFile.log(checkMessage);
     }
 
     @Override
@@ -226,6 +232,11 @@ public class VisitorsBridge extends SquidAstVisitor<LexerlessGrammar> implements
     @Override
     public void addNoSonarLines(Set<Integer> lines) {
       sourceFile.addNoSonarTagLines(lines);
+    }
+
+    @Override
+    public void ignoredLinesByRule(Multimap<String, Integer> ignoreLinesByRule) {
+      this.ignoredLinesByRule = ignoreLinesByRule;
     }
 
   }
