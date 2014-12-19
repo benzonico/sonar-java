@@ -28,3 +28,7 @@ interface bar {
   public int blah = 0;
 
 }
+
+class A {
+  public final String s;
+}

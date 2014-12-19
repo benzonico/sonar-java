@@ -69,8 +69,8 @@ public class ClassVariableVisibilityCheck extends BaseTreeVisitor implements Jav
     List<Modifier> modifiers = tree.modifiers().modifiers();
     List<AnnotationTree> annotations = tree.modifiers().annotations();
 
-    if (isClass() && isPublic(modifiers) && !(isConstant(modifiers) || !annotations.isEmpty())) {
-      context.addIssue(tree, ruleKey, "Make " + tree.simpleName() + " a static final constant or non-public and provide accessors if needed.");
+    if (isClass() && isPublic(modifiers) && !isConstant(modifiers) && annotations.isEmpty()) {
+      context.addIssue(tree, ruleKey, "Make this class field " + tree.simpleName() + " final or non-public and provide accessors if needed.");
     }
 
     super.visitVariable(tree);
@@ -81,7 +81,7 @@ public class ClassVariableVisibilityCheck extends BaseTreeVisitor implements Jav
   }
 
   private static boolean isConstant(List<Modifier> modifiers) {
-    return !modifiers.isEmpty() && modifiers.contains(Modifier.FINAL) && modifiers.contains(Modifier.STATIC);
+    return !modifiers.isEmpty() && modifiers.contains(Modifier.FINAL);
   }
 
   private static boolean isPublic(List<Modifier> modifiers) {
