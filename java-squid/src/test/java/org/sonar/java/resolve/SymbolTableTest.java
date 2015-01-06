@@ -24,6 +24,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import java.util.List;
+
 import static org.fest.assertions.Assertions.assertThat;
 
 public class SymbolTableTest {
@@ -37,6 +39,12 @@ public class SymbolTableTest {
     Symbol.TypeSymbol typeSymbol = (Symbol.TypeSymbol) result.symbol("Declaration");
     Symbol classDeclaration = result.symbol("ClassDeclaration");
     assertThat(classDeclaration.isParametrized).isTrue();
+    List<Symbol> parameters = classDeclaration.type.symbol.members.lookup("T");
+    assertThat(parameters).hasSize(1);
+    assertThat(parameters.get(0).getName()).isEqualTo("T");
+    parameters = classDeclaration.type.symbol.members.lookup("S");
+    assertThat(parameters).hasSize(1);
+    assertThat(parameters.get(0).getName()).isEqualTo("S");
     assertThat(typeSymbol.owner()).isSameAs(classDeclaration);
     assertThat(typeSymbol.flags()).isEqualTo(Flags.PRIVATE);
     assertThat(typeSymbol.getSuperclass()).isSameAs(result.symbol("Superclass").type);

@@ -20,6 +20,7 @@
 package org.sonar.java.resolve;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
@@ -357,6 +358,29 @@ public class Symbol {
     }
   }
 
+  /**
+   * Represents type variable of a parametrized type ie: T in class Foo<T>{}
+   */
+  public static class TypeVarSymbol extends TypeSymbol {
+    public TypeVarSymbol(String name, TypeSymbol owner) {
+      super(0, name, owner);
+      this.type = new Type.TypeVariableType(this);
+      this.members = new Scope(this);
+    }
+
+    @Override
+    public Type getSuperclass() {
+      //FIXME : should return upper bound or Object if no bound defined.
+      return null;
+    }
+
+    @Override
+    public List<Type> getInterfaces() {
+      //FIXME : should return upperbound
+      return ImmutableList.of();
+    }
+  }
+
   public boolean isStatic() {
     return isFlag(Flags.STATIC);
   }
@@ -394,5 +418,6 @@ public class Symbol {
     complete();
     return (flags & (Flags.PROTECTED | Flags.PRIVATE | Flags.PUBLIC)) == 0;
   }
+
 
 }

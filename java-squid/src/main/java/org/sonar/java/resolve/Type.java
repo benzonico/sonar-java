@@ -41,6 +41,7 @@ public class Type {
   public static final int METHOD = 12;
   public static final int BOT = 13;
   public static final int UNKNOWN = 14;
+  public static final int TYPEVAR = 15;
 
   int tag;
 
@@ -190,5 +191,14 @@ public class Type {
     public String toString() {
       return resultType == null ? "constructor" : "returns " + resultType.toString();
     }
+  }
+
+  public static class TypeVariableType extends Type {
+
+    public TypeVariableType(Symbol.TypeVarSymbol symbol) {
+      super(TYPEVAR, symbol);
+    }
+
+
   }
 }
