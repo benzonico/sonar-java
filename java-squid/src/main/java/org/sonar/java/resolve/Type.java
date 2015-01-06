@@ -76,6 +76,8 @@ public class Type {
       return fullyQualifiedName.equals(symbol.name);
     } else if (isTagged(ARRAY)) {
       return fullyQualifiedName.endsWith("[]") && ((ArrayType) this).elementType.is(fullyQualifiedName.substring(0, fullyQualifiedName.length() - 2));
+    } else if (isTagged(TYPEVAR)) {
+      return false;
     }
     return isTagged(BOT) || !isTagged(UNKNOWN);
   }

@@ -341,8 +341,8 @@ public class Symbol {
       }
       for (int i = 0; i < getParametersTypes().size(); i++) {
         Type paramOverrider = getParametersTypes().get(i);
-        if (paramOverrider.isTagged(Type.UNKNOWN)) {
-          //FIXME : complete symbol table should not have unknown types.
+        if (paramOverrider.isTagged(Type.UNKNOWN) || paramOverrider.isTagged(Type.TYPEVAR)) {
+          //FIXME : complete symbol table should not have unknown types and generics should be handled properly for this.
           return null;
         }
         if (!paramOverrider.equals(overridee.getParametersTypes().get(i))) {
