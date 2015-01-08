@@ -243,6 +243,7 @@ public class FirstPass extends BaseTreeVisitor {
     //Define type parameters:
     for (TypeParameterTree typeParameterTree : tree.typeParameters()) {
       Symbol.TypeVarSymbol typeVarSymbol = new Symbol.TypeVarSymbol(typeParameterTree.identifier().name(), symbol);
+      symbol.addTypeParameter((Type.TypeVariableType) typeVarSymbol.type);
       enterSymbol(typeParameterTree, typeVarSymbol);
     }
     semanticModel.associateEnv(tree, env);

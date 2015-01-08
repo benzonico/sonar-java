@@ -19,11 +19,13 @@
  */
 package org.sonar.java.resolve;
 
+import com.google.common.collect.Maps;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Map;
 
 public class Type {
 
@@ -101,6 +103,17 @@ public class Type {
     return symbol.isParametrized;
   }
 
+  public Type rawType() {
+    return this;
+  }
+
+  /**
+   * JLS8 4.6
+   */
+  public Type erasure() {
+    return this;
+  }
+
   public boolean isPrimitive() {
     return tag <= BOOLEAN;
   }
@@ -133,13 +146,20 @@ public class Type {
      * Type of elements of this array.
      */
     Type elementType;
-
+    private final ArrayType erasure;
     /**
      * @param arrayClass {@link Symbols#arrayClass}
      */
     public ArrayType(Type elementType, Symbol.TypeSymbol arrayClass) {
       super(ARRAY, arrayClass);
       this.elementType = elementType;
+      //element
+      this.erasure = new ArrayType(arrayClass);
+    }
+
+    private ArrayType(Symbol.TypeSymbol arrayClass) {
+      super(ARRAY, arrayClass);
+      this.erasure = this;
     }
 
     @Override
@@ -172,6 +192,14 @@ public class Type {
     public Type elementType() {
       return elementType;
     }
+
+    @Override
+    public Type erasure() {
+      if(erasure.elementType == null) {
+        erasure.elementType = elementType.erasure();
+      }
+      return erasure;
+    }
   }
 
   public static class MethodType extends Type {
@@ -197,10 +225,53 @@ public class Type {
 
   public static class TypeVariableType extends Type {
 
+    public List<Type> bounds;
+
     public TypeVariableType(Symbol.TypeVarSymbol symbol) {
       super(TYPEVAR, symbol);
     }
 
+    /**
+     * Erasure of a type variable is the erasure of its leftmost bound.
+     */
+    @Override
+    public Type erasure() {
+      return bounds.get(0);
+    }
+  }
 
+  public static class InstantiatedParametrizedType extends ClassType {
+
+    private static Map<Symbol, Map<Map<TypeVariableType, Type>, InstantiatedParametrizedType>> typeCache = Maps.newHashMap();
+
+    final Map<TypeVariableType, Type> typeSubstitution;
+    final Type rawType;
+
+    public static InstantiatedParametrizedType getInstantiatedType(Symbol.TypeSymbol symbol, Map<TypeVariableType, Type> typeSubstitution) {
+      if(typeCache.get(symbol) == null) {
+        Map<Map<TypeVariableType, Type>, InstantiatedParametrizedType> map = Maps.newHashMap();
+        typeCache.put(symbol, map);
+      }
+      if(typeCache.get(symbol).get(typeSubstitution) == null) {
+        typeCache.get(symbol).put(typeSubstitution, new InstantiatedParametrizedType(symbol, typeSubstitution));
+      }
+      return typeCache.get(symbol).get(typeSubstitution);
+    }
+
+    private InstantiatedParametrizedType(Symbol.TypeSymbol symbol, Map<TypeVariableType, Type> typeSubstitution) {
+      super(symbol);
+      this.rawType = symbol.getType();
+      this.typeSubstitution = typeSubstitution;
+    }
+
+    @Override
+    public Type rawType() {
+      return rawType;
+    }
+
+    @Override
+    public Type erasure() {
+      return rawType.erasure();
+    }
   }
 }
