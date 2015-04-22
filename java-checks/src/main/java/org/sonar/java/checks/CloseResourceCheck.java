@@ -20,7 +20,6 @@
 package org.sonar.java.checks;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.sonar.api.server.rule.RulesDefinition;
@@ -56,7 +55,6 @@ import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -72,8 +70,40 @@ import java.util.Set;
 @SqaleConstantRemediation("5min")
 public class CloseResourceCheck extends SubscriptionBaseVisitor {
 
-  private static enum State {
-    NULL, CLOSED, OPEN, IGNORED
+  private enum State {
+    NULL, CLOSED, OPEN, IGNORED;
+
+    public boolean isIgnored() {
+      return this.equals(IGNORED);
+    }
+
+    public static State mergeStates(@Nullable State state1, @Nullable State state2) {
+      // * | C | O | I | N |
+      // --+---+---+---+---|
+      // C | C | O | I | C | <- CLOSED
+      // --+---+---+---+---|
+      // O | O | O | I | O | <- OPEN
+      // --+---+---+---+---|
+      // I | I | I | I | I | <- IGNORED
+      // --+---+---+---+---|
+      // N | C | O | I | N | <- NULL
+      // ------------------+
+
+      if (state1 != null && state1.equals(state2)) {
+        return state1;
+      } else if ((State.CLOSED.equals(state1) && State.OPEN.equals(state2)) || (State.OPEN.equals(state1) && State.CLOSED.equals(state2))) {
+        return State.OPEN;
+      } else if (State.NULL.equals(state1)) {
+        return state2;
+      } else if (State.NULL.equals(state2)) {
+        return state1;
+      }
+       return State.IGNORED;
+    }
+
+    public boolean isOpen() {
+      return this.equals(OPEN);
+    }
   }
 
   private static final String IGNORED_CLOSEABLE_SUBTYPES[] = {
@@ -224,17 +254,17 @@ public class CloseResourceCheck extends SubscriptionBaseVisitor {
       tree.block().accept(this);
 
       for (CatchTree catchTree : tree.catches()) {
-        executionState = new ExecutionState(blockES.parentExecutionState);
+        executionState = new ExecutionState(blockES.parent);
         catchTree.block().accept(this);
         blockES.merge(executionState);
       }
 
       if (tree.finallyBlock() != null) {
-        executionState = new ExecutionState(blockES.parentExecutionState);
+        executionState = new ExecutionState(blockES.parent);
         tree.finallyBlock().accept(this);
-        executionState = blockES.parentExecutionState.overrideBy(blockES.overrideBy(executionState));
+        executionState = blockES.parent.overrideBy(blockES.overrideBy(executionState));
       } else {
-        executionState = blockES.parentExecutionState.merge(blockES);
+        executionState = blockES.parent.merge(blockES);
       }
     }
 
@@ -242,18 +272,15 @@ public class CloseResourceCheck extends SubscriptionBaseVisitor {
     public void visitIfStatement(IfStatementTree tree) {
       tree.condition().accept(this);
 
-      ExecutionState currentES = executionState;
-      ExecutionState thenES = new ExecutionState(currentES);
-      ExecutionState elseES = new ExecutionState(currentES);
+      ExecutionState thenES = new ExecutionState(executionState);
 
       executionState = thenES;
-      tree.thenStatement().accept(this);
+      scan(tree.thenStatement());
 
-      if (tree.elseStatement() != null) {
-        executionState = elseES;
-        tree.elseStatement().accept(this);
-      }
-      executionState = currentES.merge(thenES, elseES);
+      ExecutionState elseES = new ExecutionState(thenES.parent);
+      executionState = elseES;
+      scan(tree.elseStatement());
+      executionState = thenES.parent.merge(thenES, elseES);
     }
 
     private Set<Symbol> extractCloseableSymbols(List<VariableTree> variableTrees) {
@@ -269,18 +296,18 @@ public class CloseResourceCheck extends SubscriptionBaseVisitor {
 
     private static class ExecutionState {
       @Nullable
-      private ExecutionState parentExecutionState;
+      private ExecutionState parent;
       private Map<Symbol, CloseableOccurence> closeableOccurenceBySymbol = Maps.newHashMap();
       private Set<Tree> unclosedCloseableReferences = Sets.newHashSet();
 
       ExecutionState(Set<Symbol> excludedCloseables) {
         for (Symbol symbol : excludedCloseables) {
-          closeableOccurenceBySymbol.put(symbol, new CloseableOccurence(null, State.IGNORED));
+          closeableOccurenceBySymbol.put(symbol, CloseableOccurence.IGNORED);
         }
       }
 
       public ExecutionState(ExecutionState parentState) {
-        this.parentExecutionState = parentState;
+        this.parent = parentState;
       }
 
       public ExecutionState merge(ExecutionState es) {
@@ -309,30 +336,7 @@ public class CloseResourceCheck extends SubscriptionBaseVisitor {
             } else {
               state2 = getCloseableState(symbol);
             }
-
-            // * | C | O | I | N |
-            // --+---+---+---+---|
-            // C | C | O | I | C | <- CLOSED
-            // --+---+---+---+---|
-            // O | O | O | I | O | <- OPEN
-            // --+---+---+---+---|
-            // I | I | I | I | I | <- IGNORED
-            // --+---+---+---+---|
-            // N | C | O | I | N | <- NULL
-            // ------------------+
-
-            if (state1 != null && state1.equals(state2)) {
-              currentOccurence.state = state1;
-            } else if ((State.CLOSED.equals(state1) && State.OPEN.equals(state2)) || (State.OPEN.equals(state1) && State.CLOSED.equals(state2))) {
-              currentOccurence.state = State.OPEN;
-            } else if (State.NULL.equals(state1)) {
-              currentOccurence.state = state2;
-            } else if (State.NULL.equals(state2)) {
-              currentOccurence.state = state1;
-            } else {
-              currentOccurence.state = State.IGNORED;
-            }
-
+            currentOccurence.state = State.mergeStates(state1, state2);
             closeableOccurenceBySymbol.put(symbol, currentOccurence);
           }
         }
@@ -366,9 +370,10 @@ public class CloseResourceCheck extends SubscriptionBaseVisitor {
         CloseableOccurence newOccurence = new CloseableOccurence(lastAssignmentTree, getCloseableStateFromExpression(symbol, assignmentExpression));
         CloseableOccurence currentOccurence = getCloseableOccurence(symbol);
         if (currentOccurence != null) {
-          if (State.OPEN.equals(currentOccurence.state)) {
+          if (currentOccurence.state.isOpen()) {
             unclosedCloseableReferences.add(currentOccurence.lastAssignment);
-          } else if (!State.IGNORED.equals(currentOccurence.state)) {
+          }
+          if (!currentOccurence.state.isIgnored()) {
             closeableOccurenceBySymbol.put(symbol, newOccurence);
           }
         } else {
@@ -426,7 +431,7 @@ public class CloseResourceCheck extends SubscriptionBaseVisitor {
               return true;
             } else {
               CloseableOccurence currentOccurence = getCloseableOccurence(symbol);
-              if (currentOccurence != null && State.IGNORED.equals(currentOccurence.state)) {
+              if (currentOccurence != null && currentOccurence.state.isIgnored()) {
                 return true;
               }
             }
@@ -448,7 +453,7 @@ public class CloseResourceCheck extends SubscriptionBaseVisitor {
           } else if (expression.is(Tree.Kind.TYPE_CAST)) {
             checkUsageOfClosables(((TypeCastTree) expression).expression());
           } else if (expression.is(Tree.Kind.METHOD_INVOCATION, Tree.Kind.NEW_CLASS)) {
-            List<ExpressionTree> arguments = Lists.newArrayList();
+            List<ExpressionTree> arguments;
             if (expression.is(Tree.Kind.METHOD_INVOCATION)) {
               arguments = ((MethodInvocationTree) expression).arguments();
             } else {
@@ -477,11 +482,12 @@ public class CloseResourceCheck extends SubscriptionBaseVisitor {
 
       private void markAs(Symbol symbol, State state) {
         if (closeableOccurenceBySymbol.containsKey(symbol)) {
-          closeableOccurenceBySymbol.get(symbol).setState(state);
-        } else if (parentExecutionState != null) {
+          closeableOccurenceBySymbol.get(symbol).state = state;
+        } else if (parent != null) {
           CloseableOccurence occurence = getCloseableOccurence(symbol);
           if (occurence != null) {
-            closeableOccurenceBySymbol.put(symbol, new CloseableOccurence(occurence.lastAssignment, state));
+            occurence.state = state;
+            closeableOccurenceBySymbol.put(symbol, occurence);
           }
         }
       }
@@ -489,7 +495,7 @@ public class CloseResourceCheck extends SubscriptionBaseVisitor {
       private Set<Tree> getUnclosedClosables() {
         Set<Tree> results = Sets.newHashSet(unclosedCloseableReferences);
         for (CloseableOccurence occurence : closeableOccurenceBySymbol.values()) {
-          if (State.OPEN.equals(occurence.state)) {
+          if (occurence.state.isOpen()) {
             results.add(occurence.lastAssignment);
           }
         }
@@ -501,8 +507,8 @@ public class CloseResourceCheck extends SubscriptionBaseVisitor {
         CloseableOccurence occurence = closeableOccurenceBySymbol.get(symbol);
         if (occurence != null) {
           return new CloseableOccurence(occurence.lastAssignment, occurence.state);
-        } else if (parentExecutionState != null) {
-          return parentExecutionState.getCloseableOccurence(symbol);
+        } else if (parent != null) {
+          return parent.getCloseableOccurence(symbol);
         }
         return null;
       }
@@ -515,15 +521,12 @@ public class CloseResourceCheck extends SubscriptionBaseVisitor {
 
       private static class CloseableOccurence {
 
+        private static final CloseableOccurence IGNORED = new CloseableOccurence(null, State.IGNORED);
         private Tree lastAssignment;
         private State state;
 
         public CloseableOccurence(Tree lastAssignment, State state) {
           this.lastAssignment = lastAssignment;
-          this.state = state;
-        }
-
-        public void setState(State state) {
           this.state = state;
         }
 

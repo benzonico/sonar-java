@@ -314,3 +314,11 @@ class MyCloseable implements Closeable {
   public void close() {
   }
 }
+
+class Foo {
+  void foo() {
+    InputStream is;
+    is = new FileInputStream(""); // Noncompliant
+    is = new FileInputStream(""); // Noncompliant
+  }
+}
