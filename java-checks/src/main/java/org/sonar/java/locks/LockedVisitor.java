@@ -30,8 +30,6 @@ import org.sonar.plugins.java.api.tree.MemberSelectExpressionTree;
 import org.sonar.plugins.java.api.tree.MethodInvocationTree;
 import org.sonar.plugins.java.api.tree.Tree;
 
-import javax.annotation.CheckForNull;
-
 public class LockedVisitor extends DataFlowVisitor {
 
   private static final String JAVA_LOCK = "java.util.concurrent.locks.Lock";
@@ -60,40 +58,17 @@ public class LockedVisitor extends DataFlowVisitor {
 
   @Override
   public void visitMethodInvocation(MethodInvocationTree tree) {
-    if (LOCK_INVOCATIONS.anyMatch(tree)) {
-      Symbol symbol = extractInvokedOnSymbol(tree.methodSelect());
-      if (symbol != null) {
-        executionState.markValueAs(symbol, new LockState.Locked(tree));
-      }
-    } else if (UNLOCK_INVOCATION.matches(tree)) {
-      ExpressionTree methodSelect = tree.methodSelect();
-      if (methodSelect.is(Tree.Kind.MEMBER_SELECT)) {
-        ExpressionTree expression = ((MemberSelectExpressionTree) methodSelect).expression();
-        if (expression.is(Tree.Kind.IDENTIFIER)) {
-          executionState.markValueAs(((IdentifierTree) expression).symbol(), new LockState.Unlocked(tree));
+    ExpressionTree methodSelect = tree.methodSelect();
+    if (methodSelect.is(Tree.Kind.MEMBER_SELECT)) {
+      ExpressionTree expression = ((MemberSelectExpressionTree) methodSelect).expression();
+      if (expression.is(Tree.Kind.IDENTIFIER)) {
+        Symbol symbol = ((IdentifierTree) expression).symbol();
+        if (LOCK_INVOCATIONS.anyMatch(tree)) {
+          executionState.markValueAs(symbol, new LockState.Locked(tree));
+        } else if (UNLOCK_INVOCATION.matches(tree)) {
+          executionState.markValueAs(symbol, new LockState.Unlocked(tree));
         }
       }
     }
   }
-
-  @CheckForNull
-  private Symbol extractInvokedOnSymbol(ExpressionTree expressionTree) {
-    if (expressionTree.is(Tree.Kind.MEMBER_SELECT)) {
-      return extractSymbol(((MemberSelectExpressionTree) expressionTree).expression());
-    } else if (expressionTree.is(Tree.Kind.IDENTIFIER)) {
-      return ((IdentifierTree) expressionTree).symbol().owner();
-    }
-    return null;
-  }
-
-  @CheckForNull
-  private Symbol extractSymbol(ExpressionTree expressionTree) {
-    if (expressionTree.is(Tree.Kind.MEMBER_SELECT)) {
-      return ((MemberSelectExpressionTree) expressionTree).identifier().symbol();
-    } else if (expressionTree.is(Tree.Kind.IDENTIFIER)) {
-      return ((IdentifierTree) expressionTree).symbol();
-    }
-    return null;
-  }
-
 }
