@@ -24,6 +24,7 @@ import com.google.common.collect.Lists;
 import com.sonar.sslr.impl.Parser;
 import org.sonar.java.ast.parser.JavaParser;
 import org.sonar.java.model.JavaTree;
+import org.sonar.java.parser.sslr.ActionParser;
 import org.sonar.plugins.java.api.semantic.Symbol;
 import org.sonar.plugins.java.api.tree.CompilationUnitTree;
 import org.sonar.plugins.java.api.tree.IdentifierTree;
@@ -34,7 +35,7 @@ import java.io.File;
 
 class Result {
 
-  private static final Parser parser = JavaParser.createParser(Charsets.UTF_8);
+  private static final ActionParser parser = JavaParser.createParser(Charsets.UTF_8);
   private final SemanticModel semanticModel;
 
   private Result(SemanticModel semanticModel) {

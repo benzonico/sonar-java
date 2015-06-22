@@ -24,6 +24,7 @@ import com.sonar.sslr.api.AstNode;
 import com.sonar.sslr.impl.Parser;
 import org.junit.Test;
 import org.sonar.java.ast.parser.JavaParser;
+import org.sonar.java.parser.sslr.ActionParser;
 import org.sonar.plugins.java.api.tree.ClassTree;
 import org.sonar.plugins.java.api.tree.CompilationUnitTree;
 import org.sonar.plugins.java.api.tree.MethodTree;
@@ -33,7 +34,7 @@ import static org.fest.assertions.Assertions.assertThat;
 
 public class AccessorsUtilsTest {
 
-  private final Parser p = JavaParser.createParser(Charsets.UTF_8);
+  private final ActionParser p = JavaParser.createParser(Charsets.UTF_8);
 
   @Test
   public void method_badly_named_is_not_accessor() {
@@ -136,8 +137,7 @@ public class AccessorsUtilsTest {
   }
 
   private ClassTree parseClass(String code) {
-    AstNode astNode = p.parse(code);
-    return extractClass((CompilationUnitTree) astNode);
+    return extractClass((CompilationUnitTree) (AstNode) p.parse(code));
   }
 
   private ClassTree extractClass(CompilationUnitTree cut) {

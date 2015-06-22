@@ -25,6 +25,7 @@ import com.sonar.sslr.impl.Parser;
 import org.fest.assertions.Assertions;
 import org.junit.Test;
 import org.sonar.java.ast.parser.JavaParser;
+import org.sonar.java.parser.sslr.ActionParser;
 import org.sonar.java.resolve.SemanticModel;
 import org.sonar.plugins.java.api.semantic.Symbol;
 import org.sonar.plugins.java.api.tree.ClassTree;
@@ -38,7 +39,7 @@ import java.io.File;
 
 public class MethodInvocationTreeImplTest {
 
-  private final Parser p = JavaParser.createParser(Charsets.UTF_8);
+  private final ActionParser p = JavaParser.createParser(Charsets.UTF_8);
 
   @Test
   public void symbol_should_be_set() {

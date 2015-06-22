@@ -37,6 +37,7 @@ import net.sf.cglib.proxy.MethodProxy;
 import org.sonar.java.ast.api.JavaPunctuator;
 import org.sonar.java.model.InternalSyntaxToken;
 import org.sonar.java.model.JavaTree;
+import org.sonar.plugins.java.api.tree.Tree;
 import org.sonar.sslr.grammar.GrammarRuleKey;
 import org.sonar.sslr.grammar.LexerlessGrammarBuilder;
 import org.sonar.sslr.internal.matchers.InputBuffer;
@@ -60,7 +61,7 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Set;
 
-public class ActionParser extends Parser {
+public class ActionParser {
 
   private final Charset charset;
 
@@ -71,8 +72,6 @@ public class ActionParser extends Parser {
   private final ParseRunner parseRunner;
 
   public ActionParser(Charset charset, LexerlessGrammarBuilder b, Class grammarClass, Object treeFactory, GrammarRuleKey rootRule) {
-    super(null);
-
     this.charset = charset;
 
     this.grammarBuilderInterceptor = new GrammarBuilderInterceptor(b);
@@ -111,13 +110,7 @@ public class ActionParser extends Parser {
     this.parseRunner = new ParseRunner(this.grammar.getRootRule());
   }
 
-  @Override
-  public AstNode parse(List tokens) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public AstNode parse(File file) {
+  public Tree parse(File file) {
     try {
       return parse(new Input(Files.toString(file, charset).toCharArray(), file.toURI()));
     } catch (IOException e) {
@@ -125,12 +118,11 @@ public class ActionParser extends Parser {
     }
   }
 
-  @Override
-  public AstNode parse(String source) {
+  public Tree parse(String source) {
     return parse(new Input(source.toCharArray()));
   }
 
-  private AstNode parse(Input input) {
+  private Tree parse(Input input) {
     ParsingResult result = parseRunner.parse(input.input());
 
     if (!result.isMatched()) {
@@ -143,19 +135,8 @@ public class ActionParser extends Parser {
     return syntaxTreeCreator.create(result.getParseTreeRoot(), input);
   }
 
-  @Override
   public Grammar getGrammar() {
     return grammar;
-  }
-
-  @Override
-  public void setRootRule(Rule rootRule) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public RuleDefinition getRootRule() {
-    throw new UnsupportedOperationException();
   }
 
   public GrammarRuleKey rootRule() {

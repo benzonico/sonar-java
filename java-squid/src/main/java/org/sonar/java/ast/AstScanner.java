@@ -28,6 +28,9 @@ import com.sonar.sslr.impl.ast.AstWalker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.java.ast.visitors.VisitorContext;
+import org.sonar.java.model.VisitorsBridge;
+import org.sonar.java.parser.sslr.ActionParser;
+import org.sonar.plugins.java.api.tree.Tree;
 import org.sonar.squidbridge.AstScannerExceptionHandler;
 import org.sonar.squidbridge.CommentAnalyser;
 import org.sonar.squidbridge.ProgressReport;
@@ -51,10 +54,10 @@ public class AstScanner {
   private final SquidIndex index;
   private final List<SquidAstVisitor<LexerlessGrammar>> visitors = Lists.newArrayList();
   private final List<AstScannerExceptionHandler> astScannerExceptionHandlers = Lists.newArrayList();
-  private final Parser<LexerlessGrammar> parser;
+  private final ActionParser parser;
   private CommentAnalyser commentAnalyser;
 
-  public AstScanner(Parser<LexerlessGrammar> parser) {
+  public AstScanner(ActionParser parser) {
     this.parser = parser;
     this.index = new SquidIndex();
   }
@@ -90,15 +93,16 @@ public class AstScanner {
       visitor.init();
     }
 
-    AstWalker astWalker = new AstWalker(visitors);
     ProgressReport progressReport = new ProgressReport("Report about progress of Java AST analyzer", TimeUnit.SECONDS.toMillis(10));
     progressReport.start(Lists.newArrayList(files));
     for (File file : files) {
       context.setFile(file);
       context.addSourceCode(new SourceFile(file.getAbsolutePath(), file.getPath()));
       try {
-        AstNode ast = parser.parse(file);
-        astWalker.walkAndVisit(ast);
+        Tree ast = parser.parse(file);
+        for (SquidAstVisitor<LexerlessGrammar> visitor : visitors) {
+          visitor.visitFile((AstNode) ast);
+        }
         progressReport.nextFile();
         context.popSourceCode();
       } catch (RecognitionException e) {
@@ -142,10 +146,8 @@ public class AstScanner {
     return "SonarQube is unable to analyze file : '" + file.getAbsolutePath() + "'";
   }
 
-  public void withSquidAstVisitor(SquidAstVisitor<LexerlessGrammar> visitor) {
-    if (visitor instanceof AstScannerExceptionHandler) {
-      astScannerExceptionHandlers.add((AstScannerExceptionHandler) visitor);
-    }
+  public void withSquidAstVisitor(VisitorsBridge visitor) {
+    astScannerExceptionHandlers.add(visitor);
     this.visitors.add(visitor);
   }
 
@@ -157,10 +159,8 @@ public class AstScanner {
     this.commentAnalyser = commentAnalyser;
   }
 
-  public void accept(CodeVisitor visitor) {
-    if (visitor instanceof SquidAstVisitor) {
-      withSquidAstVisitor((SquidAstVisitor<LexerlessGrammar>) visitor);
-    }
+  public void accept(VisitorsBridge visitorsBridge) {
+    withSquidAstVisitor(visitorsBridge);
   }
 
 }

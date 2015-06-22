@@ -26,6 +26,7 @@ import com.sonar.sslr.impl.Parser;
 import org.fest.assertions.BooleanAssert;
 import org.junit.Test;
 import org.sonar.java.ast.parser.JavaParser;
+import org.sonar.java.parser.sslr.ActionParser;
 import org.sonar.plugins.java.api.tree.ClassTree;
 import org.sonar.plugins.java.api.tree.CompilationUnitTree;
 import org.sonar.plugins.java.api.tree.MethodTree;
@@ -37,7 +38,7 @@ import static org.fest.assertions.Assertions.assertThat;
 
 public class SyntacticEquivalenceTest {
 
-  private final Parser p = JavaParser.createParser(Charsets.UTF_8);
+  private final ActionParser p = JavaParser.createParser(Charsets.UTF_8);
 
   @Test
   public void null_equivalence() throws Exception {

@@ -29,6 +29,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mockito;
+import org.sonar.java.ast.parser.JavaParser;
+import org.sonar.java.model.VisitorsBridge;
+import org.sonar.plugins.java.api.JavaFileScanner;
+import org.sonar.plugins.java.api.JavaFileScannerContext;
 import org.sonar.squidbridge.AstScannerExceptionHandler;
 import org.sonar.squidbridge.SquidAstVisitor;
 import org.sonar.squidbridge.api.AnalysisException;
@@ -51,8 +55,8 @@ public class AstScannerTest {
   public void should_not_fail_whole_analysis_upon_parse_error_and_notify_audit_listeners() {
     FakeAuditListener listener = spy(new FakeAuditListener());
 
-    AstScanner scanner = new AstScanner(new ParserAdapter<LexerlessGrammar>(Charsets.UTF_8, FakeGrammar.builder().build()));
-    scanner.withSquidAstVisitor(listener);
+    AstScanner scanner = new AstScanner(JavaParser.createParser(Charsets.UTF_8));
+    scanner.withSquidAstVisitor(new VisitorsBridge(listener));
 
     scanner.scan(ImmutableList.of(new File("src/test/resources/AstScannerParseError.txt")));
     verify(listener).processRecognitionException(Mockito.any(RecognitionException.class));
@@ -60,15 +64,13 @@ public class AstScannerTest {
 
   @Test
   public void should_propagate_visitor_exception_when_there_also_is_a_parse_error() {
-    AstScanner scanner = new AstScanner(new ParserAdapter<LexerlessGrammar>(Charsets.UTF_8, FakeGrammar.builder().build()));
-    scanner.withSquidAstVisitor(new SquidAstVisitor<LexerlessGrammar>() {
-
+    AstScanner scanner = new AstScanner(JavaParser.createParser(Charsets.UTF_8));
+    scanner.withSquidAstVisitor(new VisitorsBridge(new JavaFileScanner() {
       @Override
-      public void visitFile(AstNode node) {
+      public void scanFile(JavaFileScannerContext context) {
         throw new NullPointerException("foo");
       }
-
-    });
+    }));
 
     thrown.expectMessage("SonarQube is unable to analyze file");
     thrown.expect(new BaseMatcher() {
@@ -90,15 +92,13 @@ public class AstScannerTest {
 
   @Test
   public void should_propagate_visitor_exception_when_no_parse_error() {
-    AstScanner scanner = new AstScanner(new ParserAdapter<LexerlessGrammar>(Charsets.UTF_8, FakeGrammar.builder().build()));
-    scanner.withSquidAstVisitor(new SquidAstVisitor<LexerlessGrammar>() {
-
+    AstScanner scanner = new AstScanner(JavaParser.createParser(Charsets.UTF_8));
+    scanner.withSquidAstVisitor(new VisitorsBridge(new JavaFileScanner() {
       @Override
-      public void visitFile(AstNode node) {
+      public void scanFile(JavaFileScannerContext context) {
         throw new NullPointerException("foo");
       }
-
-    });
+    }));
 
     thrown.expectMessage("SonarQube is unable to analyze file");
     thrown.expect(new BaseMatcher() {
@@ -118,7 +118,9 @@ public class AstScannerTest {
     scanner.scan(ImmutableList.of(new File("src/test/resources/AstScannerNoParseError.txt")));
   }
 
-  private static class FakeAuditListener extends SquidAstVisitor<LexerlessGrammar> implements AstScannerExceptionHandler {
+  private static class FakeAuditListener implements AstScannerExceptionHandler, JavaFileScanner {
+
+    private JavaFileScannerContext context;
 
     @Override
     public void processRecognitionException(RecognitionException e) {
@@ -128,6 +130,10 @@ public class AstScannerTest {
     public void processException(Exception e) {
     }
 
+    @Override
+    public void scanFile(JavaFileScannerContext context) {
+      this.context = context;
+    }
   }
 
   private static enum FakeGrammar implements GrammarRuleKey {
