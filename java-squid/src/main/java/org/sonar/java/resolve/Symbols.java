@@ -33,7 +33,7 @@ import java.util.Map.Entry;
 public class Symbols {
 
   static final JavaSymbol.PackageJavaSymbol rootPackage;
-  final JavaSymbol.PackageJavaSymbol defaultPackage;
+  static final JavaSymbol.PackageJavaSymbol defaultPackage;
 
   /**
    * Owns all predefined symbols (builtin types, operators).
@@ -152,14 +152,12 @@ public class Symbols {
     predefClass.members.enter(booleanType.symbol);
     predefClass.members.enter(nullType.symbol);
     predefClass.members.enter(voidType.symbol);
+    defaultPackage = new JavaSymbol.PackageJavaSymbol("", rootPackage);
   }
 
   private static boolean operatorsCreated = false;
 
   public Symbols(BytecodeCompleter bytecodeCompleter) {
-    defaultPackage = new JavaSymbol.PackageJavaSymbol("", rootPackage);
-
-
     bytecodeCompleter.init(this);
 
     // predefined types for java lang

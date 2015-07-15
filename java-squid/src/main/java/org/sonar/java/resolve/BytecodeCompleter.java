@@ -58,7 +58,7 @@ public class BytecodeCompleter implements JavaSymbol.Completer {
   private final Map<String, JavaSymbol.TypeJavaSymbol> currentFileClasses = new HashMap<>();
   private final Map<String, JavaSymbol.PackageJavaSymbol> packages = new HashMap<>();
 
-  private static ClassLoader classLoader;
+  private ClassLoader classLoader;
 
   public BytecodeCompleter(List<File> projectClasspath, ParametrizedTypeCache parametrizedTypeCache) {
     this.projectClasspath = projectClasspath;
@@ -236,11 +236,13 @@ public class BytecodeCompleter implements JavaSymbol.Completer {
   }
 
   public void done() {
+    closeClassLoader();
   }
 
-  public static void closeClassLoader() {
+  public void closeClassLoader() {
     if (classLoader != null && classLoader instanceof Closeable) {
       Closeables.closeQuietly((Closeable) classLoader);
+      classLoader = null;
     }
   }
 
