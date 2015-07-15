@@ -47,7 +47,6 @@ public class BytecodeCompleter implements JavaSymbol.Completer {
       Flags.INTERFACE | Flags.ANNOTATION | Flags.ENUM |
       Flags.STATIC | Flags.FINAL | Flags.SYNCHRONIZED | Flags.VOLATILE | Flags.TRANSIENT | Flags.VARARGS | Flags.NATIVE |
       Flags.ABSTRACT | Flags.STRICTFP | Flags.DEPRECATED;
-
   private Symbols symbols;
   private final List<File> projectClasspath;
   private final ParametrizedTypeCache parametrizedTypeCache;
@@ -55,10 +54,11 @@ public class BytecodeCompleter implements JavaSymbol.Completer {
   /**
    * Indexed by flat name.
    */
-  private final Map<String, JavaSymbol.TypeJavaSymbol> classes = new HashMap<String, JavaSymbol.TypeJavaSymbol>();
-  private final Map<String, JavaSymbol.PackageJavaSymbol> packages = new HashMap<String, JavaSymbol.PackageJavaSymbol>();
+  private static final Map<String, JavaSymbol.TypeJavaSymbol> classes = new HashMap<>();
+  private final Map<String, JavaSymbol.TypeJavaSymbol> currentFileClasses = new HashMap<>();
+  private final Map<String, JavaSymbol.PackageJavaSymbol> packages = new HashMap<>();
 
-  private ClassLoader classLoader;
+  private static ClassLoader classLoader;
 
   public BytecodeCompleter(List<File> projectClasspath, ParametrizedTypeCache parametrizedTypeCache) {
     this.projectClasspath = projectClasspath;
@@ -71,19 +71,20 @@ public class BytecodeCompleter implements JavaSymbol.Completer {
 
   public JavaSymbol.TypeJavaSymbol registerClass(JavaSymbol.TypeJavaSymbol classSymbol) {
     String flatName = formFullName(classSymbol);
-    Preconditions.checkState(!classes.containsKey(flatName), "Registering class 2 times : " + flatName);
-    classes.put(flatName, classSymbol);
+    Preconditions.checkState(!currentFileClasses.containsKey(flatName), "Registering class 2 times : " + flatName);
+    currentFileClasses.put(flatName, classSymbol);
     return classSymbol;
   }
 
   @Override
   public void complete(JavaSymbol symbol) {
     LOG.debug("Completing symbol : " + symbol.name);
+    String bytecodeName = formFullName(symbol);
+
     //complete outer class to set flags for inner class properly.
     if (symbol.owner.isKind(JavaSymbol.TYP)) {
       symbol.owner.complete();
     }
-    String bytecodeName = formFullName(symbol);
     JavaSymbol.TypeJavaSymbol classSymbol = getClassSymbol(bytecodeName);
     Preconditions.checkState(classSymbol == symbol);
 
@@ -103,7 +104,9 @@ public class BytecodeCompleter implements JavaSymbol.Completer {
       classReader.accept(
           new BytecodeVisitor(this, symbols, (JavaSymbol.TypeJavaSymbol) symbol, parametrizedTypeCache),
           ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
+          classes.put(Convert.flatName(bytecodeName), classSymbol);
     }
+    LOG.debug("Completed symbol : " + symbol.name);
   }
 
   @Nullable
@@ -147,6 +150,9 @@ public class BytecodeCompleter implements JavaSymbol.Completer {
     String flatName = Convert.flatName(bytecodeName);
     JavaSymbol.TypeJavaSymbol symbol = classes.get(flatName);
     if (symbol == null) {
+      symbol = currentFileClasses.get(flatName);
+    }
+    if (symbol == null) {
       String shortName = Convert.shortName(flatName);
       String packageName = Convert.packagePart(flatName);
       String enclosingClassName = Convert.enclosingClassName(shortName);
@@ -187,6 +193,9 @@ public class BytecodeCompleter implements JavaSymbol.Completer {
   // TODO(Godin): Method name is misleading because of lazy loading.
   public JavaSymbol loadClass(String fullname) {
     JavaSymbol.TypeJavaSymbol symbol = classes.get(fullname);
+    if (symbol == null) {
+      symbol = currentFileClasses.get(fullname);
+    }
     if (symbol != null) {
       return symbol;
     }
@@ -227,6 +236,9 @@ public class BytecodeCompleter implements JavaSymbol.Completer {
   }
 
   public void done() {
+  }
+
+  public static void closeClassLoader() {
     if (classLoader != null && classLoader instanceof Closeable) {
       Closeables.closeQuietly((Closeable) classLoader);
     }

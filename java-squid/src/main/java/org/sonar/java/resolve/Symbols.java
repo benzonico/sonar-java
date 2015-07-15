@@ -38,7 +38,7 @@ public class Symbols {
   /**
    * Owns all predefined symbols (builtin types, operators).
    */
-  final JavaSymbol.TypeJavaSymbol predefClass;
+  static final JavaSymbol.TypeJavaSymbol predefClass;
 
   /**
    * Type, which can't be modelled for the moment.
@@ -48,20 +48,20 @@ public class Symbols {
 
   final JavaSymbol.TypeJavaSymbol arrayClass;
 
-  final JavaSymbol.TypeJavaSymbol methodClass;
-  final JavaSymbol.TypeJavaSymbol noSymbol;
+  static final JavaSymbol.TypeJavaSymbol methodClass;
+  static final JavaSymbol.TypeJavaSymbol noSymbol;
 
   // builtin types
-  final JavaType byteType;
-  final JavaType charType;
-  final JavaType shortType;
-  final JavaType intType;
-  final JavaType longType;
-  final JavaType floatType;
-  final JavaType doubleType;
-  final JavaType booleanType;
-  final JavaType nullType;
-  final JavaType voidType;
+  static final JavaType byteType;
+  static final JavaType charType;
+  static final JavaType shortType;
+  static final JavaType intType;
+  static final JavaType longType;
+  static final JavaType floatType;
+  static final JavaType doubleType;
+  static final JavaType booleanType;
+  static final JavaType nullType;
+  static final JavaType voidType;
 
   final BiMap<JavaType, JavaType> boxedTypes;
 
@@ -122,21 +122,9 @@ public class Symbols {
     unknownType.supertype = null;
     unknownType.interfaces = ImmutableList.of();
     unknownSymbol.type = unknownType;
-  }
-
-  public Symbols(BytecodeCompleter bytecodeCompleter) {
-    defaultPackage = new JavaSymbol.PackageJavaSymbol("", rootPackage);
-
-    predefClass = new JavaSymbol.TypeJavaSymbol(Flags.PUBLIC, "", rootPackage);
-    predefClass.members = new Scope(predefClass);
-    ((JavaType.ClassJavaType) predefClass.type).interfaces = ImmutableList.of();
-
     // TODO should have type "noType":
     noSymbol = new JavaSymbol.TypeJavaSymbol(0, "", rootPackage);
 
-    methodClass = new JavaSymbol.TypeJavaSymbol(Flags.PUBLIC, "", noSymbol);
-
-    // builtin types
     byteType = initType(JavaType.BYTE, "byte");
     charType = initType(JavaType.CHAR, "char");
     shortType = initType(JavaType.SHORT, "short");
@@ -147,6 +135,30 @@ public class Symbols {
     booleanType = initType(JavaType.BOOLEAN, "boolean");
     nullType = initType(JavaType.BOT, "<nulltype>");
     voidType = initType(JavaType.VOID, "void");
+    predefClass = new JavaSymbol.TypeJavaSymbol(Flags.PUBLIC, "", rootPackage);
+    methodClass = new JavaSymbol.TypeJavaSymbol(Flags.PUBLIC, "", noSymbol);
+
+    predefClass.members = new Scope(predefClass);
+    ((JavaType.ClassJavaType) predefClass.type).interfaces = ImmutableList.of();
+
+    // builtin types
+    predefClass.members.enter(byteType.symbol);
+    predefClass.members.enter(charType.symbol);
+    predefClass.members.enter(shortType.symbol);
+    predefClass.members.enter(intType.symbol);
+    predefClass.members.enter(longType.symbol);
+    predefClass.members.enter(floatType.symbol);
+    predefClass.members.enter(doubleType.symbol);
+    predefClass.members.enter(booleanType.symbol);
+    predefClass.members.enter(nullType.symbol);
+    predefClass.members.enter(voidType.symbol);
+  }
+
+  private static boolean operatorsCreated = false;
+
+  public Symbols(BytecodeCompleter bytecodeCompleter) {
+    defaultPackage = new JavaSymbol.PackageJavaSymbol("", rootPackage);
+
 
     bytecodeCompleter.init(this);
 
@@ -195,10 +207,9 @@ public class Symbols {
   /**
    * Registers builtin types as symbols, so that they can be found as an usual identifiers.
    */
-  private JavaType initType(int tag, String name) {
+  private static JavaType initType(int tag, String name) {
     JavaSymbol.TypeJavaSymbol symbol = new JavaSymbol.TypeJavaSymbol(Flags.PUBLIC, name, rootPackage);
     symbol.members = new Scope(symbol);
-    predefClass.members.enter(symbol);
     ((JavaType.ClassJavaType) symbol.type).interfaces = ImmutableList.of();
     symbol.type.tag = tag;
     return symbol.type;
@@ -208,6 +219,10 @@ public class Symbols {
    * Registers operators as methods, so that they can be found as an usual methods.
    */
   private void enterOperators() {
+    if(operatorsCreated) {
+      return;
+    }
+    operatorsCreated = true;
     for (String op : new String[] {"+", "-", "*", "/", "%"}) {
       for (JavaType type : Arrays.asList(doubleType, floatType, longType, intType)) {
         enterBinop(op, type, type, type);
@@ -245,7 +260,7 @@ public class Symbols {
     enterBinop("+", stringType, stringType, stringType);
   }
 
-  private void enterBinop(String name, JavaType left, JavaType right, JavaType result) {
+  private static void enterBinop(String name, JavaType left, JavaType right, JavaType result) {
     JavaType type = new JavaType.MethodJavaType(ImmutableList.of(left, right), result, ImmutableList.<JavaType>of(), methodClass);
     JavaSymbol symbol = new JavaSymbol.MethodJavaSymbol(Flags.PUBLIC | Flags.STATIC, name, type, predefClass);
     predefClass.members.enter(symbol);
