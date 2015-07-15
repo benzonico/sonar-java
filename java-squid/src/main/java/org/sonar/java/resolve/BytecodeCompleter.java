@@ -148,10 +148,7 @@ public class BytecodeCompleter implements JavaSymbol.Completer {
   // FIXME(Godin): or parameter must be renamed, or should not receive flat name, in a former case - first transformation in this method seems useless
   JavaSymbol.TypeJavaSymbol getClassSymbol(String bytecodeName, int flags) {
     String flatName = Convert.flatName(bytecodeName);
-    JavaSymbol.TypeJavaSymbol symbol = classes.get(flatName);
-    if (symbol == null) {
-      symbol = currentFileClasses.get(flatName);
-    }
+    JavaSymbol.TypeJavaSymbol symbol = getCachedSymbol(flatName);
     if (symbol == null) {
       String shortName = Convert.shortName(flatName);
       String packageName = Convert.packagePart(flatName);
@@ -179,6 +176,14 @@ public class BytecodeCompleter implements JavaSymbol.Completer {
     return symbol;
   }
 
+  private JavaSymbol.TypeJavaSymbol getCachedSymbol(String flatName) {
+    JavaSymbol.TypeJavaSymbol symbol = currentFileClasses.get(flatName);
+    if (symbol == null) {
+      symbol = classes.get(flatName);
+    }
+    return symbol;
+  }
+
   public int filterBytecodeFlags(int flags) {
     return flags & ACCEPTABLE_BYTECODE_FLAGS;
   }
@@ -192,10 +197,7 @@ public class BytecodeCompleter implements JavaSymbol.Completer {
    */
   // TODO(Godin): Method name is misleading because of lazy loading.
   public JavaSymbol loadClass(String fullname) {
-    JavaSymbol.TypeJavaSymbol symbol = classes.get(fullname);
-    if (symbol == null) {
-      symbol = currentFileClasses.get(fullname);
-    }
+    JavaSymbol.TypeJavaSymbol symbol = getCachedSymbol(fullname);
     if (symbol != null) {
       return symbol;
     }
