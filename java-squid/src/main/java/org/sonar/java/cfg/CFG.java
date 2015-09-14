@@ -56,6 +56,7 @@ import org.sonar.plugins.java.api.tree.WhileStatementTree;
 
 import javax.annotation.Nullable;
 
+import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -526,6 +527,13 @@ public class CFG {
     result.successors.add(trueBranch);
     result.successors.add(falseBranch);
     return result;
+  }
+
+  @Override
+  public String toString() {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    debugTo(new PrintStream(out));
+    return "\n"+out.toString();
   }
 
   public void debugTo(PrintStream out) {

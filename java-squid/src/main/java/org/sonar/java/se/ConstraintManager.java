@@ -37,28 +37,23 @@ import java.util.Map;
 
 public class ConstraintManager {
 
-  private final Map<Tree, SymbolicValue> map = new HashMap<>();
   /**
    * Map to handle lookup of fields.
    * */
   private final Map<Symbol, SymbolicValue> symbolMap = new HashMap<>();
+  private int counter = ProgramState.EMPTY_STATE.constraints.size();
 
 
 
   private SymbolicValue createSymbolicValue(Tree syntaxNode) {
-    SymbolicValue result = map.get(syntaxNode);
-    if (result == null && syntaxNode.is(Tree.Kind.IDENTIFIER)) {
+    SymbolicValue result = null;
+    if (syntaxNode.is(Tree.Kind.IDENTIFIER)) {
       result = symbolMap.get(((IdentifierTree) syntaxNode).symbol());
-    } else if (result == null && syntaxNode.is(Tree.Kind.VARIABLE)) {
-      result = symbolMap.get(((VariableTree) syntaxNode).symbol());
     }
     if (result == null) {
-      result = new SymbolicValue.ObjectSymbolicValue(map.size()+ProgramState.EMPTY_STATE.constraints.size());
-      map.put(syntaxNode, result);
+      result = new SymbolicValue.ObjectSymbolicValue(counter++);
       if(syntaxNode.is(Tree.Kind.IDENTIFIER)) {
         symbolMap.put(((IdentifierTree) syntaxNode).symbol(), result);
-      } else if(syntaxNode.is(Tree.Kind.VARIABLE)) {
-        symbolMap.put(((VariableTree) syntaxNode).symbol(), result);
       }
     }
     return result;
@@ -214,7 +209,7 @@ public class ConstraintManager {
     if (data == null || !data.equals(booleanConstraint)) {
       Map<SymbolicValue, Object> temp = Maps.newHashMap(programState.constraints);
       temp.put(sv, booleanConstraint);
-      return new ProgramState(programState.values, temp);
+      return new ProgramState(programState.values, temp, programState.stack);
     }
     return programState;
   }
@@ -234,7 +229,7 @@ public class ConstraintManager {
     if (data == null || !data.equals(nullConstraint)) {
       Map<SymbolicValue, Object> temp = Maps.newHashMap(programState.constraints);
       temp.put(sv, nullConstraint);
-      return new ProgramState(programState.values, temp);
+      return new ProgramState(programState.values, temp, programState.stack);
     }
     return programState;
   }

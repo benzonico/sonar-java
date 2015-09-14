@@ -21,6 +21,7 @@ package org.sonar.java.se;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
+import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -41,11 +42,13 @@ import org.sonar.plugins.java.api.tree.ExpressionTree;
 import org.sonar.plugins.java.api.tree.ForStatementTree;
 import org.sonar.plugins.java.api.tree.IdentifierTree;
 import org.sonar.plugins.java.api.tree.IfStatementTree;
+import org.sonar.plugins.java.api.tree.MethodInvocationTree;
 import org.sonar.plugins.java.api.tree.MethodTree;
 import org.sonar.plugins.java.api.tree.Tree;
 import org.sonar.plugins.java.api.tree.VariableTree;
 
 import javax.annotation.CheckForNull;
+
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
@@ -57,6 +60,7 @@ public class ExplodedGraphWalker extends BaseTreeVisitor {
    * Arbitrary number to limit symbolic execution.
    */
   private static final int MAX_STEPS = 2000;
+  private static final boolean DEBUG_MODE_ACTIVATED = true;
   private static final Logger LOG = LoggerFactory.getLogger(ExplodedGraphWalker.class);
   private final ConditionAlwaysTrueOrFalseChecker alwaysTrueOrFalseChecker;
   private ExplodedGraph explodedGraph;
@@ -93,6 +97,7 @@ public class ExplodedGraphWalker extends BaseTreeVisitor {
   private void execute(MethodTree tree) {
     checkerDispatcher.init();
     CFG cfg = CFG.build(tree);
+    debugPrint(cfg);
     explodedGraph = new ExplodedGraph();
     constraintManager = new ConstraintManager();
     workList = new LinkedList<>();
@@ -227,8 +232,15 @@ public class ExplodedGraphWalker extends BaseTreeVisitor {
   }
 
   private void visit(Tree tree) {
-    LOG.debug("visiting node "+tree.kind().name()+ " at line "+ ((JavaTree) tree).getLine());
+    LOG.debug("visiting node " + tree.kind().name() + " at line " + ((JavaTree) tree).getLine());
+    checkerDispatcher.executeCheckPreStatement(tree);
     switch (tree.kind()) {
+      case METHOD_INVOCATION:
+        ExpressionTree methodName = ((MethodInvocationTree) tree).methodSelect();
+        if(methodName.is(Tree.Kind.IDENTIFIER) && "printState".equals(((IdentifierTree) methodName).name())) {
+          debugPrint(((JavaTree) tree).getLine(), node);
+        }
+        break;
       case LABELED_STATEMENT:
       case SWITCH_STATEMENT:
       case EXPRESSION_STATEMENT:
@@ -237,35 +249,41 @@ public class ExplodedGraphWalker extends BaseTreeVisitor {
       case VARIABLE:
         VariableTree variableTree = (VariableTree) tree;
         ExpressionTree initializer = variableTree.initializer();
-        if (variableTree.type().symbolType().isPrimitive()) {
-          if(initializer == null) {
-            if(variableTree.type().symbolType().is("boolean")) {
+        if (initializer == null) {
+          if (variableTree.type().symbolType().isPrimitive()) {
+            if (variableTree.type().symbolType().is("boolean")) {
               programState = put(programState, variableTree.symbol(), SymbolicValue.FALSE_LITERAL);
             }
           } else {
-            SymbolicValue val = constraintManager.eval(programState, initializer);
-            programState = put(programState, variableTree.symbol(), val);
+            programState = put(programState, variableTree.symbol(), SymbolicValue.NULL_LITERAL);
           }
         } else {
-          if (initializer == null) {
-            programState = put(programState, variableTree.symbol(), SymbolicValue.NULL_LITERAL);
-          } else {
-            SymbolicValue val = constraintManager.eval(programState, initializer);
-            programState = put(programState, variableTree.symbol(), val);
-          }
+          // inializer is not null and so we should consume last evaluated expression.
         }
+        break;
+      case IDENTIFIER:
+      case MEMBER_SELECT:
+        programState = ProgramState.stackValue(programState, getVal(tree));
         break;
       case ASSIGNMENT:
         AssignmentExpressionTree assignmentExpressionTree = ((AssignmentExpressionTree) tree);
+        SymbolicValue value = getVal(assignmentExpressionTree.expression());
         //FIXME restricted to identifiers for now.
         if(assignmentExpressionTree.variable().is(Tree.Kind.IDENTIFIER)) {
-          SymbolicValue value = getVal(assignmentExpressionTree.expression());
           programState = put(programState, ((IdentifierTree) assignmentExpressionTree.variable()).symbol(), value);
         }
+        // value of an assignement is the assigned value
+        programState = ProgramState.stackValue(programState, value);
         break;
       default:
     }
-    checkerDispatcher.executeCheckPreStatement(tree);
+
+  }
+
+  private void debugPrint(Object... toPrint) {
+    if(DEBUG_MODE_ACTIVATED) {
+      LOG.error(Joiner.on(" - ").join(toPrint));
+    }
   }
 
   static ProgramState put(ProgramState programState, Symbol symbol, SymbolicValue value) {
@@ -274,7 +292,7 @@ public class ExplodedGraphWalker extends BaseTreeVisitor {
     if (symbolicValue == null || !symbolicValue.equals(value)) {
       Map<Symbol, SymbolicValue> temp = Maps.newHashMap(programState.values);
       temp.put(symbol, value);
-      return new ProgramState(temp, programState.constraints);
+      return new ProgramState(temp, programState.constraints, programState.stack);
     }
     return programState;
   }
@@ -283,6 +301,7 @@ public class ExplodedGraphWalker extends BaseTreeVisitor {
     ExplodedGraph.Node node = explodedGraph.getNode(programPoint, programState);
     if (!node.isNew) {
       // has been enqueued earlier
+      LOG.error("Node already explored :  "+node);
       return;
     }
     workList.addFirst(node);

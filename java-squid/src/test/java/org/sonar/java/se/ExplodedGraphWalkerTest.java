@@ -29,6 +29,11 @@ public class ExplodedGraphWalkerTest {
   }
 
   @Test
+  public void test2() throws Exception {
+    JavaCheckVerifier.verify("src/test/files/se/SeEngineTestCase.java", new SymbolicExecutionVisitor());
+  }
+
+  @Test
   public void test_null_pointer_check_unit_test() throws Exception {
     JavaCheckVerifier.verify("src/test/files/se/NullPointerCheck.java", new SymbolicExecutionVisitor());
   }

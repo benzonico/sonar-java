@@ -19,10 +19,14 @@
  */
 package org.sonar.java.se;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.sonar.plugins.java.api.semantic.Symbol;
 
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Objects;
 
@@ -34,13 +38,25 @@ public class ProgramState {
         .put(SymbolicValue.NULL_LITERAL, ConstraintManager.NullConstraint.NULL)
         .put(SymbolicValue.TRUE_LITERAL, ConstraintManager.BooleanConstraint.TRUE)
         .put(SymbolicValue.FALSE_LITERAL, ConstraintManager.BooleanConstraint.FALSE)
-        .build());
-    Map<Symbol, SymbolicValue> values;
-    Map<SymbolicValue, Object> constraints;
+        .build(), Lists.<SymbolicValue>newLinkedList());
+  final Deque<SymbolicValue> stack;
+  final Map<Symbol, SymbolicValue> values;
+  final Map<SymbolicValue, Object> constraints;
 
-  public ProgramState(Map<Symbol, SymbolicValue> values, Map<SymbolicValue, Object> constraints) {
+  public ProgramState(Map<Symbol, SymbolicValue> values, Map<SymbolicValue, Object> constraints, Deque<SymbolicValue> stack) {
     this.values = ImmutableMap.copyOf(values);
     this.constraints = ImmutableMap.copyOf(constraints);
+    this.stack = stack;
+  }
+
+  static ProgramState stackValue(ProgramState ps, SymbolicValue sv) {
+    Deque<SymbolicValue> newStack = new LinkedList<>(ps.stack);
+    newStack.push(sv);
+    return new ProgramState(ps.values, ps.constraints, newStack);
+  }
+
+  SymbolicValue peekValue() {
+    return stack.peek();
   }
 
   @Override
@@ -63,7 +79,7 @@ public class ProgramState {
 
   @Override
   public String toString() {
-    return "{" + values.toString() + "}  {" + constraints.toString() + "}";
+    return "{" + values.toString() + "}  {" + constraints.toString() + "}  {"+ Joiner.on(",").join(stack)+"}";
   }
 
 }
